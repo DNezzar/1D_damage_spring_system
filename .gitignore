@@ -1,8 +1,8 @@
 __pycache__/
 *.pyc
-# publications sous droits d'auteur, non redistribuables
+# copyrighted publications, not redistributable
 article/
-# fichiers auxiliaires LaTeX
+# LaTeX auxiliary files
 *.aux
 *.log
 *.out

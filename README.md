@@ -1,29 +1,29 @@
 # 1D damage spring system
 
-Snap-back d'un ressort endommageable en série avec un ressort élastique : solutions analytique, Newton-Raphson statique et Newmark dynamique, avec comparaison des résidus NR.
+Snap-back of a damageable spring in series with an elastic one: closed-form, static Newton-Raphson and dynamic Newmark solutions, with a comparison of the Newton-Raphson residuals.
 
-Modèle 1D à un degré de liberté : une éprouvette de béton (ressort endommageable, loi `d = 1 - exp(-(u/uc)²)`) en série avec une barre d'acier élastique, pilotée en déplacement. La raideur de la barre étant inférieure à la pente adoucissante du béton, la réponse force-déplacement présente un snap-back que le pilotage quasi-statique ne peut pas suivre. Le code compare trois solutions : la branche d'équilibre complète en forme fermée, un Newton-Raphson statique avec relance au saut, et un schéma de Newmark implicite qui convertit l'énergie libérée en énergie cinétique. Les figures montrent en particulier comment le terme d'inertie régularise le résidu non monotone du Newton-Raphson.
+One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d = 1 - exp(-(u/uc)²)`) in series with an elastic steel bar, under displacement control. Since the bar stiffness is lower than the softening slope of the concrete, the force-displacement response shows a snap-back that quasi-static displacement control cannot follow. The code compares three solutions: the complete equilibrium branch in closed form, a static Newton-Raphson with a restart at the jump, and an implicit Newmark scheme that converts the released energy into kinetic energy. The figures show in particular how the inertia term regularises the non-monotonic Newton-Raphson residual.
 
-## Organisation
+## Layout
 
-| Fichier | Rôle |
+| File | Role |
 |---|---|
-| `parametres.py` | tous les paramètres physiques et numériques, grandeurs dérivées (`python parametres.py` affiche le résumé) |
-| `modele.py` | loi d'endommagement avec variable d'histoire, résidu et tangente statiques, Newton-Raphson |
-| `solution_analytique.py` | branche d'équilibre paramétrée par `u1`, pic, bilan d'énergie du saut |
-| `solution_statique.py` | incréments de `u2`, Newton-Raphson, relance au point limite |
-| `solution_dynamique.py` | Newmark implicite prédicteur-correcteur, rampe puis maintien de `u2` |
-| `comparaison.py` | assemble les trois solutions et produit les figures |
-| `note_ressort_endommagement.tex` | note de calcul (équations, choix numériques, résultats) |
-| `figures/` | figures produites par `comparaison.py --save` |
+| `parameters.py` | all physical and numerical parameters, derived quantities (`python parameters.py` prints the summary) |
+| `model.py` | damage law with history variable, static residual and tangent, Newton-Raphson |
+| `analytical_solution.py` | equilibrium branch parametrised by `u1`, peak, energy balance of the jump |
+| `static_solution.py` | `u2` increments, Newton-Raphson, restart at the limit point |
+| `dynamic_solution.py` | implicit predictor-corrector Newmark, ramp then hold of `u2` |
+| `comparison.py` | assembles the three solutions and produces the figures |
+| `note_damage_spring.tex` | calculation note (equations, numerical choices, results) |
+| `figures/` | figures produced by `comparison.py --save` |
 
-## Utilisation
+## Usage
 
 ```bash
 pip install numpy matplotlib
-python comparaison.py          # affiche les figures
-python comparaison.py --save   # les enregistre aussi dans figures/
-pdflatex note_ressort_endommagement.tex
+python comparison.py          # shows the figures
+python comparison.py --save   # also saves them in figures/
+pdflatex note_damage_spring.tex
 ```
 
-Unités : N, mm, s, tonne.
+Units: N, mm, s, tonne.

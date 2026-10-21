@@ -1,0 +1,140 @@
+# -*- coding: utf-8 -*-
+"""
+Entry point: assembles the three solutions (analytical, static, dynamic)
+and produces the comparison figures, in particular the static vs dynamic
+comparison of the Newton-Raphson residual curves (one residual curve per
+increment, with the NR iterates as dots on the curve).
+
+Run:  python comparison.py          (shows the figures)
+      python comparison.py --save   (also saves them in figures/)
+"""
+
+import os
+import sys
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+import model as mdl
+import parameters as prm
+from analytical_solution import analytical_curve, released_energy
+from static_solution import solve as solve_static
+from dynamic_solution import solve as solve_dynamic, res_dynamic
+
+
+def main(save=False):
+    prm.summary()
+
+    # -- Solutions ----------------------------------------------------------
+    u1_ana, u2_ana, F_ana = analytical_curve()
+    F_max, u2_fmax, energy, _ = released_energy(u1_ana, u2_ana, F_ana)
+    print(f"[Analytical] F_max = {F_max:.1f} N reached at u2 = {u2_fmax:.3f} mm")
+    print(f"[Analytical] Energy released at the jump (area jump / equilibrium branch) = {energy:.3f} J")
+
+    u2_steps, u1_static, F_static, hist_static = solve_static()
+
+    t_dyn, u2_dyn, u1_dyn, v1_dyn, a1_dyn, F_dyn, hist_dyn = solve_dynamic()
+    print(f"[Dynamic] {len(hist_dyn)} time steps, dt = {t_dyn[1]*1e3:.3f} ms")
+
+    # -- Fig 1: F-u2, the three solutions -----------------------------------
+    plt.figure(figsize=(10, 6))
+    plt.plot(u2_ana, F_ana, 'r--', lw=2, label='Analytical (with snap-back)')
+    plt.plot(u2_steps, F_static, 'b-', lw=1.5, label='Static (Newton-Raphson)')
+    plt.plot(u2_dyn, F_dyn, 'g-', lw=1.5, label='Dynamic (Newmark-beta)')
+    plt.xlabel('u2 [mm]')
+    plt.ylabel('Force F2 [N]')
+    plt.title('Force-displacement response: analytical vs static vs dynamic')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+
+    # -- Fig 2: damage of spring 1 ------------------------------------------
+    plt.figure(figsize=(8, 5))
+    u1_plot = np.linspace(0.0, max(u1_static.max(), u1_dyn.max()) * 1.1, 500)
+    plt.plot(u1_plot, mdl.damage(u1_plot), 'k-', label='d(u1)')
+    plt.plot(u1_static, mdl.damage(u1_static), 'b.', ms=3, label='Static')
+    plt.plot(u1_dyn, mdl.damage(u1_dyn), 'g.', ms=3, label='Dynamic')
+    plt.xlabel('u1 [mm]')
+    plt.ylabel('Damage d')
+    plt.title('Damage evolution of spring 1')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+
+    # -- Fig 3: NR residual comparison, static vs dynamic -------------------
+    n_res_demo = 15
+    u1_max_plot = max(u1_static.max(), u1_dyn.max()) * 1.2
+    u1_sweep = np.linspace(0.0, u1_max_plot, 400)
+    colors = plt.cm.viridis(np.linspace(0, 1, n_res_demo))
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=False)
+
+    ax = axes[0]
+    idx_static = np.linspace(0, len(hist_static) - 1, n_res_demo).astype(int)
+    for color, i in zip(colors, idx_static):
+        u2n, kappa, hist_x, hist_r = hist_static[i]
+        ax.plot(u1_sweep, mdl.res_static(u1_sweep, u2n, kappa), color=color, lw=1.2, alpha=0.8)
+        ax.plot(hist_x, hist_r, 'o', color=color, ms=5, mec='k', mew=0.4)
+    ax.axhline(0, color='k', lw=0.8)
+    ax.set_xlabel('u1 [mm]')
+    ax.set_ylabel('Static residual R(u1) [N]')
+    ax.set_title('Static: residual(u1) per increment + NR iterates')
+    ax.grid(True, alpha=0.3)
+
+    ax = axes[1]
+    idx_dyn = np.linspace(0, len(hist_dyn) - 1, n_res_demo).astype(int)
+    for color, i in zip(colors, idx_dyn):
+        u2_np1, u_tilde, c1, kappa, hist_x, hist_r = hist_dyn[i]
+        ax.plot(u1_sweep, res_dynamic(u1_sweep, u2_np1, u_tilde, c1, kappa),
+                color=color, lw=1.2, alpha=0.8)
+        ax.plot(hist_x, hist_r, 'o', color=color, ms=5, mec='k', mew=0.4)
+    ax.axhline(0, color='k', lw=0.8)
+    ax.set_xlabel('u1 [mm]')
+    ax.set_ylabel('Dynamic residual R(u1) [N]')
+    ax.set_title('Dynamic: residual(u1) per time step + NR iterates')
+    ax.grid(True, alpha=0.3)
+
+    fig.suptitle("Newton-Raphson residual comparison: inertia (term m1*c1) "
+                 "regularises the non-monotonic static residual")
+    plt.tight_layout()
+
+    # -- Fig 4: dynamic time response ---------------------------------------
+    plt.figure(figsize=(10, 5))
+    plt.plot(t_dyn * 1e3, u2_dyn, 'k--', label='u2(t) imposed')
+    plt.plot(t_dyn * 1e3, u1_dyn, 'g-', label='u1(t) (mass m1)')
+    plt.xlabel('time [ms]')
+    plt.ylabel('displacement [mm]')
+    plt.title('Dynamic response of node 1 (ramp then hold of u2)')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+
+    # -- Fig 5: zoom on the dynamic rupture window --------------------------
+    i_snap = np.argmax(u1_dyn > 5.0 * mdl.uc)  # first step where spring 1 is broken
+    T_free = 2.0 * np.pi * np.sqrt(mdl.m1 / mdl.k2)
+    win = (t_dyn > t_dyn[i_snap] - 2 * T_free) & (t_dyn < t_dyn[i_snap] + 6 * T_free)
+    plt.figure(figsize=(10, 5))
+    plt.plot(t_dyn[win] * 1e3, u2_dyn[win], 'k--', label='u2(t) imposed')
+    plt.plot(t_dyn[win] * 1e3, u1_dyn[win], 'g.-', ms=3, label='u1(t) (mass m1)')
+    plt.xlabel('time [ms]')
+    plt.ylabel('displacement [mm]')
+    plt.title(f'Zoom on the rupture: free oscillation of period 2π√(m1/k2) = {T_free*1e3:.2f} ms')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+
+    if save:
+        outdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'figures')
+        os.makedirs(outdir, exist_ok=True)
+        names = ['force_displacement', 'damage', 'residuals_static_dynamic',
+                 'time_response', 'rupture_zoom']
+        for num, name in zip(plt.get_fignums(), names):
+            plt.figure(num).savefig(os.path.join(outdir, f'{name}.pdf'))
+            plt.figure(num).savefig(os.path.join(outdir, f'{name}.png'), dpi=150)
+        print(f"[Figures] saved in {outdir}")
+
+    plt.show()
+
+
+if __name__ == "__main__":
+    main(save='--save' in sys.argv)
