@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+# publications sous droits d'auteur, non redistribuables
+article/
+# fichiers auxiliaires LaTeX
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*:Zone.Identifier
