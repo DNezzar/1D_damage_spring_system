@@ -14,7 +14,8 @@ One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d =
 | `static_solution.py` | `u2` increments, Newton-Raphson, restart at the limit point |
 | `dynamic_solution.py` | implicit predictor-corrector Newmark, ramp then hold of `u2` |
 | `comparison.py` | assembles the three solutions and produces the figures |
-| `note_damage_spring.tex` | calculation note (equations, numerical choices, results) |
+| `note_damage_spring.tex` | calculation note: derivation from the mass-spring system to the residuals, closed-form branch, numerical choices, results |
+| `note_nonlinear_dynamics.tex` | Newmark scheme in predictor-corrector form and Newton-Raphson for nonlinear dynamics (residual, consistent tangent, algorithm) |
 | `figures/` | figures produced by `comparison.py --save` |
 
 ## Usage
