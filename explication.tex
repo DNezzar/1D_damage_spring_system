@@ -18,6 +18,8 @@
 \newcommand{\dd}{\mathrm{d}}
 \newcommand{\kd}{k_1^{d}}
 \newcommand{\uc}{u_c}
+\newcommand{\imax}{i_{\max}}
+\newcommand{\ninc}{n_{\text{inc}}}
 \newtcolorbox{alamain}{colback=yellow!8,colframe=orange!70!black,title=À faire à la main,fonttitle=\bfseries}
 \newtcolorbox{idee}{colback=blue!5,colframe=blue!50!black,title=L'idée à retenir,fonttitle=\bfseries}
 
@@ -29,6 +31,13 @@ le calcul statique et le calcul dynamique}
 
 \begin{document}
 \maketitle
+
+\begin{center}
+\small Toutes les grandeurs sont exprimées avec les paramètres du fichier \texttt{parameters.py} :
+matériaux ($E_i$, $A_i$, $L_i$, $\rho_i$, $f_t$, $m_{\text{grip}}$), chargement ($u_2^f$, $v_2$, $t_{\text{hold}}$),
+algorithme statique ($\ninc$, $\varepsilon_R$, $\imax$), algorithme dynamique ($\beta$, $\gamma$, $N$).
+Les valeurs numériques correspondantes s'obtiennent avec \texttt{python parameters.py}.
+\end{center}
 
 \tableofcontents
 \clearpage
@@ -59,14 +68,15 @@ chaîne de deux ressorts :
 \end{center}
 
 \begin{itemize}[nosep]
-  \item Le \textbf{ressort 1} représente l'éprouvette de béton : longueur $L_1 = 100$~mm, section
-        $A_1 = 100\times100$~mm$^2$, module $E_1 = 30\,000$~MPa. Il s'endommage en traction.
+  \item Le \textbf{ressort 1} représente l'éprouvette de béton : longueur $L_1$, section $A_1$,
+        module $E_1$, masse volumique $\rho_1$, résistance en traction $f_t$. Il s'endommage en
+        traction.
   \item Le \textbf{ressort 2} représente la barre d'acier de la chaîne de chargement : longueur
-        $L_2 = 1000$~mm, diamètre 20~mm ($A_2 = 314$~mm$^2$), module $E_2 = 210\,000$~MPa. Il
-        reste élastique.
-  \item Le \textbf{noeud 1} porte la masse concentrée $m_1$ (demi-éprouvette, demi-barre, mors) ;
-        c'est le seul degré de liberté inconnu.
-  \item Le \textbf{noeud 2} est piloté en déplacement : on impose $u_2(t)$ croissant.
+        $L_2$, section $A_2$, module $E_2$, masse volumique $\rho_2$. Il reste élastique.
+  \item Le \textbf{noeud 1} porte la masse concentrée
+        $m_1 = \tfrac12\rho_1A_1L_1 + \tfrac12\rho_2A_2L_2 + m_{\text{grip}}$
+        (demi-éprouvette, demi-barre, mors) ; c'est le seul degré de liberté inconnu.
+  \item Le \textbf{noeud 2} est piloté en déplacement : on impose $u_2(t)$ croissant de $0$ à $u_2^f$.
 \end{itemize}
 Unités : N, mm, s. Alors les contraintes sont en MPa et les masses en tonnes.
 
@@ -77,12 +87,12 @@ $\delta = FL/(EA)$ : c'est un ressort de raideur
   k = \frac{EA}{L}.
 \end{equation}
 \begin{alamain}
-$k_1 = \dfrac{30\,000\times10\,000}{100} = 3{,}0\cdot10^6$~N/mm, \quad
-$k_2 = \dfrac{210\,000\times314{,}16}{1000} = 6{,}6\cdot10^4$~N/mm, \quad
-$\dfrac{k_2}{k_1} = 0{,}022$.
+$k_1 = \dfrac{E_1A_1}{L_1}$, \qquad $k_2 = \dfrac{E_2A_2}{L_2}$, \qquad
+$\dfrac{k_2}{k_1} = \dfrac{E_2A_2}{E_1A_1}\cdot\dfrac{L_1}{L_2}$.
 \end{alamain}
-La barre d'acier est donc \emph{45 fois plus souple} que l'éprouvette intacte, parce qu'elle est
-dix fois plus longue et trente fois moins large. Retenons ce rapport : tout le snap-back vient de là.
+Le rapport $k_2/k_1$ est le produit d'un rapport de rigidités axiales $E_2A_2/E_1A_1$ et d'un
+rapport de longueurs $L_1/L_2$. Avec une barre de chargement longue et mince devant
+l'éprouvette, ce rapport est petit : tout le snap-back vient de là.
 
 \section{La loi d'endommagement du ressort 1}
 
@@ -121,11 +131,12 @@ Elle s'annule pour $x = 1/\sqrt2$, soit
 \begin{equation}
   u_1^{\text{pic}} = \frac{\uc}{\sqrt2},\qquad
   F_{\max} = k_1\frac{\uc}{\sqrt2}e^{-1/2} = \frac{k_1\uc}{\sqrt{2e}},\qquad
-  d^{\text{pic}} = 1-e^{-1/2} = 0{,}393 .
+  d^{\text{pic}} = 1-e^{-1/2} \simeq 0{,}39 .
 \end{equation}
-Au pic, le ressort a déjà perdu 39~\% de sa raideur : le pic de force n'est pas le début de
-l'endommagement, c'est le moment où la perte de raideur l'emporte sur l'augmentation
-d'allongement.
+Au pic, le ressort a déjà perdu près de 40~\% de sa raideur : le pic de force n'est pas le début
+de l'endommagement, c'est le moment où la perte de raideur l'emporte sur l'augmentation
+d'allongement. (Les constantes comme $1/\sqrt2$ ou $1-e^{-1/2}$ ne dépendent que de la forme de
+la loi, pas des paramètres.)
 
 \paragraph{La pente descendante la plus raide.} Elle joue un rôle central pour le snap-back. On
 dérive une seconde fois :
@@ -135,12 +146,12 @@ dérive une seconde fois :
 \end{equation}
 nulle pour $x^2 = 3/2$. En ce point d'inflexion la pente vaut
 \begin{equation}
-  \left.\frac{\dd F_1}{\dd u_1}\right|_{x=\sqrt{3/2}} = k_1e^{-3/2}(1-3) = -2e^{-3/2}k_1 = -0{,}446\,k_1 .
+  \left.\frac{\dd F_1}{\dd u_1}\right|_{x=\sqrt{3/2}} = k_1e^{-3/2}(1-3) = -2e^{-3/2}\,k_1 \simeq -0{,}45\,k_1 .
   \label{eq:pentemax}
 \end{equation}
 \begin{idee}
-Le ressort endommageable ne peut jamais « décharger » plus vite que $-0{,}446\,k_1$ par unité
-d'allongement. C'est ce nombre qu'il faut comparer à $k_2$.
+Le ressort endommageable ne peut jamais « décharger » plus vite que $2e^{-3/2}k_1$ par unité
+d'allongement. C'est cette raideur qu'il faut comparer à $k_2$.
 \end{idee}
 
 \paragraph{L'énergie dissipée totale.} Le travail pour rompre complètement le ressort est l'aire
@@ -149,27 +160,24 @@ sous la courbe :
   \int_0^\infty k_1u\,e^{-u^2/\uc^2}\,\dd u = k_1\Bigl[-\frac{\uc^2}{2}e^{-u^2/\uc^2}\Bigr]_0^\infty
   = \frac{k_1\uc^2}{2}.
 \end{equation}
-Rapportée à la section, c'est l'énergie de rupture $G_f = k_1\uc^2/(2A_1)$ (en N/mm, c'est-à-dire
-des J/m$^2$ à un facteur 1000 près).
+Rapportée à la section, c'est l'énergie de rupture $G_f = k_1\uc^2/(2A_1)$.
 
 \subsection{Calibration de $\uc$ sur la résistance en traction}
-On veut que le pic de force corresponde à la résistance en traction du béton, $F_{\max} = f_tA_1$
-avec $f_t = 3$~MPa :
+On veut que le pic de force corresponde à la résistance en traction du béton, $F_{\max} = f_tA_1$ :
 \begin{equation}
   \uc = \frac{\sqrt{2e}\,f_tA_1}{k_1} = \frac{\sqrt{2e}\,f_tL_1}{E_1}.
 \end{equation}
 \begin{alamain}
-$\uc = \dfrac{2{,}3316\times3\times100}{30\,000} = 0{,}0233$~mm, \quad
-$u_1^{\text{pic}} = 0{,}0165$~mm (soit une déformation $1{,}65\cdot10^{-4}$, réaliste pour un béton),\\
-$F_{\max} = 30\,000$~N, \quad
-$G_f = \dfrac{3\cdot10^6\times0{,}0233^2}{2\times10^4} = 0{,}082$~N/mm.
+$u_1^{\text{pic}} = \dfrac{\uc}{\sqrt2} = \dfrac{\sqrt e\,f_tL_1}{E_1}$, soit une déformation au pic
+$\varepsilon^{\text{pic}} = \sqrt e\,f_t/E_1$ (à comparer à la déformation au pic d'un béton en traction).\\
+$F_{\max} = f_tA_1$, \qquad
+$G_f = \dfrac{k_1\uc^2}{2A_1} = \dfrac{E_1}{2L_1}\cdot\dfrac{2e\,f_t^2L_1^2}{E_1^2} = \dfrac{e\,f_t^2L_1}{E_1}$.
 \end{alamain}
-Remarque utile : en combinant, $G_f = e\,f_t^2L_1/E_1$. À $f_t$ et $G_f$ donnés, la longueur $L_1$
-sur laquelle on « étale » l'endommagement n'est pas libre. Ici 100~mm donne 0{,}082~N/mm, dans
-la plage du béton courant (0{,}08 à 0{,}1~N/mm) : le modèle à un seul ressort est cohérent
-énergétiquement. Si l'on découpait l'éprouvette en plusieurs ressorts, un seul s'endommagerait
-et il faudrait réduire $\uc$ avec sa longueur pour conserver $G_f$ (c'est la « bande de
-fissuration » de Bažant et de Borst).
+Remarque utile : à $f_t$ et $G_f$ donnés, la longueur $L_1$ sur laquelle on « étale »
+l'endommagement n'est pas libre, $L_1 = G_fE_1/(e f_t^2)$. Il faut vérifier que la valeur de
+$G_f$ induite par le $L_1$ choisi reste dans la plage du matériau. Si l'on découpait l'éprouvette
+en plusieurs ressorts, un seul s'endommagerait et il faudrait réduire $\uc$ avec sa longueur
+pour conserver $G_f$ (c'est la « bande de fissuration » de Bažant et de Borst).
 
 \section{L'équilibre statique et la construction graphique}
 
@@ -197,22 +205,22 @@ droite sans changer de pente (figure~\ref{fig:constr}, gauche).
 
 \begin{figure}[h]\centering
   \includegraphics[width=\textwidth]{figures/explication_construction.pdf}
-  \caption{Construction graphique de l'équilibre. Gauche : avec la barre d'acier de 1~m, la
-  droite est presque plate ($k_2 \ll k_1$) ; dès que $u_2$ dépasse $0{,}471$~mm elle passe
-  au-dessus du pic et il n'y a plus d'intersection sur la branche montante : saut. Droite : avec
-  un ressort 2 raide ($k_2' = 0{,}8\,k_1$), la droite est plus pentue que la descente la plus raide de
-  $F_1$ ; une seule intersection quel que soit $u_2$, pas de saut.}
+  \caption{Construction graphique de l'équilibre. Gauche : $k_2 \ll k_1$, la droite est presque
+  plate ; dès que $u_2$ dépasse $u_2^{\lim}$ elle passe au-dessus du pic et il n'y a plus
+  d'intersection sur la branche montante : saut. Droite : avec un ressort 2 raide
+  ($k_2' > 2e^{-3/2}k_1$), la droite est plus pentue que la descente la plus raide de $F_1$ ; une
+  seule intersection quel que soit $u_2$, pas de saut.}
   \label{fig:constr}
 \end{figure}
 
 Trois situations, selon $u_2$, dans le cas de gauche :
 \begin{enumerate}[nosep]
-  \item $u_2$ petit (droite bleue) : une intersection sur la branche montante de $F_1$ (stable)
+  \item $u_2 < u_2^{\lim}$ : une intersection sur la branche montante de $F_1$ (stable)
         et une sur la branche descendante loin à droite (que l'on n'atteint pas en chargeant depuis
         zéro). Le système suit la première.
-  \item $u_2 = u_2^{\lim}$ (droite rouge) : la droite est \emph{tangente} à $F_1$ juste après le pic.
+  \item $u_2 = u_2^{\lim}$ : la droite est \emph{tangente} à $F_1$ juste après le pic.
         C'est le \textbf{point limite}.
-  \item $u_2 > u_2^{\lim}$ (droite verte) : plus aucune intersection à gauche. Le seul équilibre
+  \item $u_2 > u_2^{\lim}$ : plus aucune intersection à gauche. Le seul équilibre
         est très loin à droite, sur la branche $F_1\simeq0$, c'est-à-dire $u_1 \simeq u_2$ : le
         ressort 1 est rompu et le ressort 2 détendu. Le système doit \textbf{sauter} jusque-là.
 \end{enumerate}
@@ -236,41 +244,43 @@ $R$ par rapport à $u_1$, et c'est elle qui apparaîtra dans le Newton--Raphson.
 L'équation \eqref{eq:kt} n'a de solution que si la droite peut être tangente à la descente de
 $F_1$, donc si sa pente $-k_2$ est moins raide que la pente minimale \eqref{eq:pentemax} :
 \begin{equation}
-  \boxed{\;\text{snap-back}\iff k_2 < 2e^{-3/2}\,k_1 \simeq 0{,}446\,k_1\;}
+  \boxed{\;\text{snap-back}\iff k_2 < 2e^{-3/2}\,k_1\;}
   \label{eq:crit}
 \end{equation}
-Si au contraire $k_2 > 0{,}446\,k_1$, la droite coupe toujours $F_1$ en un seul point : la réponse
+Si au contraire $k_2 > 2e^{-3/2}k_1$, la droite coupe toujours $F_1$ en un seul point : la réponse
 $F(u_2)$ est adoucissante mais \emph{régulière}, et un pilotage en déplacement la suit sans
 difficulté (figure~\ref{fig:constr}, droite).
 
 \subsection{Le critère en longueurs et sections}
 En remplaçant les raideurs par $EA/L$ :
 \begin{equation}
-  \frac{E_2A_2}{L_2} < 0{,}446\,\frac{E_1A_1}{L_1}
+  \frac{E_2A_2}{L_2} < 2e^{-3/2}\,\frac{E_1A_1}{L_1}
   \quad\Longleftrightarrow\quad
-  L_2 > \frac{1}{0{,}446}\,\frac{E_2A_2}{E_1A_1}\,L_1 = 2{,}24\,\frac{E_2A_2}{E_1A_1}\,L_1 .
+  L_2 > L_2^{\text{crit}} \equiv \frac{e^{3/2}}{2}\,\frac{E_2A_2}{E_1A_1}\,L_1 .
 \end{equation}
 \begin{alamain}
-$E_1A_1 = 3{,}0\cdot10^8$~N, $E_2A_2 = 6{,}6\cdot10^7$~N, rapport $0{,}22$.\\
-$L_2^{\text{crit}} = 2{,}24\times0{,}22\times100 = 49$~mm.
+Calculer $\dfrac{E_2A_2}{E_1A_1}$, puis $L_2^{\text{crit}} = \dfrac{e^{3/2}}{2}\,\dfrac{E_2A_2}{E_1A_1}\,L_1$
+(avec $e^{3/2}/2 \simeq 2{,}24$), et comparer à $L_2$. Le rapport
+$L_2/L_2^{\text{crit}} = \dfrac{2e^{-3/2}k_1}{k_2}$ mesure de combien on est dans le snap-back.
 \end{alamain}
-Avec une barre d'acier de 1~m on est vingt fois au-delà : snap-back certain. Pour l'éviter il
-faudrait une chaîne de chargement de moins de 5~cm de long (irréaliste), ou une section d'acier
-vingt fois plus grande (diamètre 90~mm), ou une éprouvette vingt fois plus longue (2~m, mais alors
-l'endommagement se localiserait dans une partie de l'éprouvette et le reste, élastique, jouerait le
-rôle du ressort 2 : le problème se reproduit à l'intérieur de l'éprouvette).
+Pour sortir du snap-back à éprouvette fixée, il faut raccourcir la chaîne de chargement sous
+$L_2^{\text{crit}}$, ou augmenter $E_2A_2$ dans le même rapport. Allonger l'éprouvette ($L_1$ plus
+grand) augmente aussi $L_2^{\text{crit}}$, mais dans la réalité l'endommagement se localiserait
+alors dans une partie de l'éprouvette et le reste, élastique, jouerait le rôle du ressort 2 :
+le problème se reproduit à l'intérieur de l'éprouvette.
 
 \subsection{Interprétation énergétique}
 Au-delà du pic, le ressort 1 rend de l'énergie quand on le laisse s'allonger (sa force décroît),
 et le ressort 2 rend aussi de l'énergie quand il se détend. Si le ressort 2 est très souple, il a
-stocké beaucoup d'énergie, $\tfrac12F_{\max}^2/k_2$, que le ressort 1 adoucissant est incapable
-d'absorber. Le surplus ne peut partir qu'en énergie cinétique : c'est le saut.
+stocké beaucoup d'énergie que le ressort 1 adoucissant est incapable d'absorber. Le surplus ne
+peut partir qu'en énergie cinétique : c'est le saut.
 \begin{alamain}
-Énergie dans la barre d'acier au pic : $\dfrac{30\,000^2}{2\times65\,973} = 6\,820$~N.mm = 6{,}8~J.\\
-Énergie dans le béton au pic : $\tfrac12F_{\max}u_1^{\text{pic}} = \tfrac12\times30\,000\times0{,}0165 = 247$~N.mm = 0{,}25~J.
+Au pic : énergie dans la barre d'acier $\Psi_2^{\text{pic}} = \dfrac{F_{\max}^2}{2k_2} = \dfrac{f_t^2A_1^2L_2}{2E_2A_2}$,
+énergie dans le béton $\Psi_1^{\text{pic}} = \tfrac12F_{\max}u_1^{\text{pic}} = \dfrac{\sqrt e\,f_t^2A_1L_1}{2E_1}$.\\
+Leur rapport : $\dfrac{\Psi_2^{\text{pic}}}{\Psi_1^{\text{pic}}} = \dfrac{F_{\max}}{k_2u_1^{\text{pic}}} = e^{-1/2}\,\dfrac{k_1}{k_2}$.
 \end{alamain}
-La barre contient 27 fois plus d'énergie que l'éprouvette. Voilà le snap-back expliqué sans
-équation.
+Quand $k_2 \ll k_1$, la barre contient beaucoup plus d'énergie que l'éprouvette. Voilà le
+snap-back expliqué sans équation différentielle.
 
 \subsection{Les trois régimes}
 \begin{center}
@@ -279,13 +289,13 @@ La barre contient 27 fois plus d'énergie que l'éprouvette. Voilà le snap-back
 Pilotage & Jusqu'où peut-on aller ? & Ce qui bloque\\
 \midrule
 en force & jusqu'au pic $F_{\max}$ & au-delà, aucun équilibre statique quel que soit $k_2$\\
-en déplacement, $k_2 > 0{,}446k_1$ & toute la courbe & rien : branche adoucissante régulière\\
-en déplacement, $k_2 < 0{,}446k_1$ & jusqu'au point limite $u_2^{\lim}$ & la branche rebrousse chemin en $u_2$\\
+en déplacement, $k_2 > 2e^{-3/2}k_1$ & toute la courbe & rien : branche adoucissante régulière\\
+en déplacement, $k_2 < 2e^{-3/2}k_1$ & jusqu'au point limite $u_2^{\lim}$ & la branche rebrousse chemin en $u_2$\\
 \bottomrule
 \end{tabular}
 \end{center}
-Le point limite en déplacement ($k_t = 0$) est très proche du pic en force ($\dd F_1/\dd u_1 = 0$)
-quand $k_2 \ll k_1$ : ici $x_{\lim} = 0{,}720$ contre $x_{\text{pic}} = 0{,}707$.
+Le point limite en déplacement ($k_t = 0$) est d'autant plus proche du pic en force
+($\dd F_1/\dd u_1 = 0$) que $k_2/k_1$ est petit : $x_{\lim}\to1/\sqrt2$ quand $k_2/k_1\to0$.
 
 \section{La solution analytique}
 
@@ -299,7 +309,12 @@ sens.
   \label{eq:ana}
 \end{equation}
 En faisant croître $u_1$ de 0 à l'infini on décrit toute la courbe $F(u_2)$, y compris la
-partie que l'expérience ne peut pas suivre.
+partie que l'expérience ne peut pas suivre. Au pic de force :
+\begin{equation}
+  u_2^{\text{pic}} = \frac{\uc}{\sqrt2}\Bigl(1+\frac{k_1}{k_2}e^{-1/2}\Bigr)
+  = u_1^{\text{pic}} + \frac{F_{\max}}{k_2},
+\end{equation}
+somme de l'allongement du béton et de celui de la barre sous $F_{\max}$.
 
 \subsection{Où $u_2$ rebrousse chemin}
 \begin{equation}
@@ -308,16 +323,18 @@ partie que l'expérience ne peut pas suivre.
 On retrouve la tangente du système : $u_2$ croît tant que $k_t > 0$, décroît quand $k_t < 0$.
 Le point limite est la première racine de $k_t = 0$, soit
 \begin{equation}
-  e^{-x^2}\bigl(2x^2-1\bigr) = \frac{k_2}{k_1} = 0{,}022 .
+  e^{-x^2}\bigl(2x^2-1\bigr) = \frac{k_2}{k_1} .
+  \label{eq:xlim}
 \end{equation}
 \begin{alamain}
-Résolution par essais : $x = 0{,}71 \to 0{,}0050$ ; $x = 0{,}72 \to 0{,}0221$ ; $x = 0{,}73 \to 0{,}0393$.
-Donc $x_{\lim} \simeq 0{,}720$, $u_1^{\lim} = 0{,}0168$~mm, et
-$u_2^{\lim} = 0{,}0168\bigl(1 + 45{,}5\,e^{-0{,}518}\bigr) = 0{,}471$~mm.\\
-Seconde racine (fin de la zone $k_t<0$) : $x = 2{,}50$, $u_1 = 0{,}0583$~mm, $u_2 = 0{,}0634$~mm.
+Résoudre \eqref{eq:xlim} par essais (ou dichotomie) sur $x\in[1/\sqrt2,\sqrt{3/2}]$, où le membre de
+gauche croît de $0$ à $2e^{-3/2}$ : on obtient $x_{\lim}$, puis
+$u_1^{\lim} = x_{\lim}\uc$ et $u_2^{\lim} = u_1^{\lim}\bigl(1+\tfrac{k_1}{k_2}e^{-x_{\lim}^2}\bigr)$.\\
+La seconde racine $x'_{\lim} > \sqrt{3/2}$ donne la fin de la zone $k_t<0$ et le point de
+rebroussement bas de la branche, $u_2^{\min} = x'_{\lim}\uc\bigl(1+\tfrac{k_1}{k_2}e^{-x'^2_{\lim}}\bigr)$.
 \end{alamain}
-La branche d'équilibre part donc de l'origine, monte jusqu'à $(u_2, F) = (0{,}471, 30\,000)$,
-\emph{revient en arrière} jusqu'à $u_2 = 0{,}063$~mm en descendant à $F = 333$~N, puis repart vers la
+La branche d'équilibre part donc de l'origine, monte jusqu'à $(u_2^{\lim}, F\simeq F_{\max})$,
+\emph{revient en arrière} jusqu'à $u_2^{\min}$ en descendant en force, puis repart vers la
 droite le long de $F \simeq 0$, $u_2 \simeq u_1$. C'est la courbe rouge de la
 figure~\ref{fig:fu}.
 
@@ -353,64 +370,52 @@ libérée se décompose en
 où $|W|$ est l'aire comprise entre le segment vertical du saut et la branche analytique. Cette
 aire est ce que le béton n'arrive pas à dissiper : elle part en énergie cinétique.
 \begin{alamain}
-$\Psi_1 = 247 + 6\,820 = 7\,067$~N.mm, $\Psi_2 \simeq 0$. Numériquement $\mathcal D_{\text{branche}} = 744$~N.mm
-et $|W| = 6\,321$~N.mm $= 6{,}3$~J.\\
-Vitesse que prendrait la masse si tout partait en cinétique : $v = \sqrt{2\times6\,321/0{,}0274} = 680$~mm/s.
+$\Psi_1 = \tfrac12\kd(u_1^{\lim})\,(u_1^{\lim})^2 + \dfrac{F(u_1^{\lim})^2}{2k_2}
+\simeq \Psi_1^{\text{pic}}+\Psi_2^{\text{pic}}$ (le point limite est très proche du pic), \quad
+$\Psi_2 \simeq 0$ (ressort 1 rompu, ressort 2 détendu).\\
+$\mathcal D_{\text{branche}} = \int Y\,\dd d$ le long de la branche, à intégrer numériquement
+(\texttt{analytical\_solution.py}), puis $|W| = \Psi_1-\Psi_2-\mathcal D_{\text{branche}}$.\\
+Vitesse que prendrait la masse si tout partait en cinétique : $v = \sqrt{2|W|/m_1}$.
 \end{alamain}
 
 \section{Le calcul statique par Newton--Raphson}
 
 \subsection{L'algorithme}
-On impose $u_2$ par petits incréments ($2000$ pas de $0$ à $0{,}6$~mm). À chaque incrément on cherche
+On impose $u_2$ par $\ninc$ incréments de $0$ à $u_2^f$. À chaque incrément on cherche
 $u_1$ tel que $R(u_1;u_2) = 0$ par la méthode de Newton :
 \begin{equation}
   u_1^{(i+1)} = u_1^{(i)} - \frac{R(u_1^{(i)})}{k_t(u_1^{(i)})},\qquad
   k_t = \frac{\partial R}{\partial u_1} = \kd + u_1\frac{\dd\kd}{\dd u_1} + k_2 ,
 \end{equation}
 en partant de la solution de l'incrément précédent (\emph{warm start}). On arrête quand
-$|R| \le 10^{-6}$~N. Géométriquement : on trace la tangente au résidu au point courant et on
-prend son intersection avec l'axe.
+$|R| \le \varepsilon_R$, ou après $\imax$ itérations (échec). Géométriquement : on trace la
+tangente au résidu au point courant et on prend son intersection avec l'axe.
 
 \subsection{Ce qui se passe loin du point limite}
-Le résidu est presque une droite de pente $k_t \simeq k_1+k_2$, Newton converge en deux ou trois
-itérations, quadratiquement (le résidu est divisé par un facteur $\sim10^3$ à chaque itération) :
-\begin{center}
-\begin{tabular}{@{}lrr@{}}
-\toprule
-incrément 1000, $u_2 = 0{,}30015$~mm & $u_1^{(i)}$ [mm] & $R$ [N]\\
-\midrule
-$i=0$ (solution précédente) & 0,007056 & $-19{,}8$\\
-$i=1$ & 0,007065 & $-7{,}4\cdot10^{-3}$\\
-$i=2$ & 0,007065 & $-1{,}0\cdot10^{-9}$\\
-\bottomrule
-\end{tabular}
-\end{center}
+Le résidu est presque une droite de pente $k_t \simeq k_1+k_2$ : à chaque incrément le point de
+départ est à une distance $\Delta u_2\,k_2/(k_1+k_2)$ de la racine, avec $\Delta u_2 = u_2^f/\ninc$, et
+Newton converge en deux ou trois itérations, quadratiquement (l'erreur est élevée au carré à
+chaque itération). On le vérifie en lisant l'historique des itérés que renvoie
+\texttt{static\_solution.solve}.
 
 \subsection{Ce qui se passe au point limite}
-Juste avant : $u_2 = 0{,}47124$~mm, il reste une racine mais $k_t$ est presque nul, Newton a besoin
-de 4 itérations. Juste après : $u_2 = 0{,}47154$~mm, \emph{il n'y a plus de racine} près du point de
-départ. Le résidu a l'allure de la figure~\ref{fig:resnr} : un maximum local légèrement
-\emph{négatif} à $u_1 \simeq 0{,}0167$~mm, puis une descente, puis une remontée lente jusqu'à la vraie
-racine en $u_1 = u_2 = 0{,}4715$~mm. Newton, parti juste à gauche du maximum, rebondit indéfiniment
-autour de lui :
-\begin{center}
-\begin{tabular}{@{}lrrrrrrr@{}}
-\toprule
-$i$ & 0 & 1 & 2 & 3 & 4 & 5 & 6\\
-$u_1^{(i)}$ [mm] & 0,016508 & 0,016830 & 0,015562 & 0,016518 & 0,016843 & 0,015855 & 0,016518\\
-$R$ [N] & $-19{,}8$ & $-11{,}4$ & $-1\,802$ & $-19{,}2$ & $-11{,}5$ & $-1\,249$ & $-19{,}2$\\
-\bottomrule
-\end{tabular}
-\end{center}
-On reconnaît le cycle de période 3 : près du sommet la tangente est presque horizontale et
-envoie l'itéré loin à gauche, d'où il revient. Au bout de 50 itérations on déclare l'échec.
+Juste avant $u_2^{\lim}$, il reste une racine mais $k_t$ tend vers zéro : la tangente devient
+plate, les pas de Newton s'allongent et le nombre d'itérations augmente. Juste après,
+\emph{il n'y a plus de racine} près du point de départ. Le résidu a l'allure de la
+figure~\ref{fig:resnr} : un maximum local légèrement \emph{négatif} à $u_1 \simeq u_1^{\lim}$
+(sa valeur est $R(u_1^{\lim};u_2) = -k_2\,(u_2-u_2^{\lim})$, proportionnelle au dépassement du point
+limite), puis une descente, puis une remontée lente jusqu'à la vraie racine en $u_1 \simeq u_2$.
+Newton, parti juste à gauche du maximum, rebondit indéfiniment autour de lui : près du
+sommet la tangente est presque horizontale et envoie l'itéré loin à gauche, d'où la pente
+raide $\simeq k_1+k_2$ le ramène sous le sommet ; on observe un cycle de courte période. Au
+bout de $\imax$ itérations on déclare l'échec.
 
 \begin{figure}[h]\centering
   \includegraphics[width=.85\textwidth]{figures/explication_residu_nr.pdf}
   \caption{Résidu statique au premier incrément après le point limite. Les itérés de Newton
   partis de la solution précédente (rouge) cyclent autour du maximum local, sous l'axe. La
-  relance depuis $u_1 = u_2$ (vert) tombe directement sur la racine : $R(u_2) = k_1u_2e^{-(u_2/\uc)^2}$
-  avec $(u_2/\uc)^2 = 408$, soit un zéro à la précision machine.}
+  relance depuis $u_1 = u_2$ (vert) tombe directement sur la racine : $R(u_2;u_2) = k_1u_2e^{-(u_2/\uc)^2}$
+  est un zéro à la précision machine dès que $u_2 \gg \uc$.}
   \label{fig:resnr}
 \end{figure}
 
@@ -425,7 +430,7 @@ sous forme analytique avec \eqref{eq:ana}.
 
 \begin{idee}
 L'échec du Newton--Raphson au point limite n'est pas un défaut de précision ni de pas : c'est un
-défaut de \emph{point de départ}. Raffiner les incréments rapproche seulement le point de départ
+défaut de \emph{point de départ}. Augmenter $\ninc$ rapproche seulement le point de départ
 du sommet du résidu, cela ne crée pas de racine.
 \end{idee}
 
@@ -443,7 +448,7 @@ noeud 1 :
   \boxed{\;m_1\ddot u_1 + \kd(u_1)\,u_1 - k_2\bigl(u_2(t)-u_1\bigr) = 0\;}
   \label{eq:mvt}
 \end{equation}
-où $u_2(t) = v_2t$ est une rampe lente ($v_2 = 1$~mm/s), puis un maintien.
+où $u_2(t) = v_2t$ est une rampe lente jusqu'à $u_2^f$, puis un maintien de durée $t_{\text{hold}}$.
 
 \subsection{Le schéma de Newmark, construit à la main}
 On cherche $u_{n+1}$, $v_{n+1}$, $a_{n+1}$ à l'instant $t_{n+1} = t_n+\Delta t$. Des développements de
@@ -464,9 +469,9 @@ On sépare ce qui est connu (les \emph{prédicteurs}) de ce qui dépend de l'inc
   v_{n+1} = \tilde v + \gamma\Delta t\,a_{n+1}.
 \end{equation}
 Avec $\beta = 1/4$, $\gamma = 1/2$ (accélération moyenne) le schéma est inconditionnellement stable et
-ne dissipe pas ; avec $\gamma > 1/2$ il amortit numériquement les hautes fréquences (il faut alors
-$\beta \ge (\gamma+\tfrac12)^2/4$). Le code utilise $\beta = 0{,}3$, $\gamma = 0{,}55$, légèrement
-dissipatif.
+ne dissipe pas ; avec $\gamma > 1/2$ il amortit numériquement les hautes fréquences, d'autant plus
+que $\gamma-\tfrac12$ et $\omega\Delta t$ sont grands, et il faut alors $\beta \ge (\gamma+\tfrac12)^2/4$
+pour rester inconditionnellement stable.
 
 \subsection{Le résidu dynamique}
 On reporte $a_{n+1} = c_1(u_{n+1}-\tilde u)$ dans \eqref{eq:mvt} écrite en $t_{n+1}$ :
@@ -488,22 +493,31 @@ n'a qu'une racine, dès que
   \Delta t < \Delta t_{\max} = \sqrt{\frac{m_1}{\beta\,(2e^{-3/2}k_1-k_2)}} .
   \label{eq:dtmax}
 \end{equation}
+Le code choisit $\Delta t = T_0/N$ avec $T_0 = 2\pi\sqrt{m_1/(k_1+k_2)}$ la période propre du
+système sain. Le rapport inertie/raideur dans la tangente vaut alors
+\begin{equation}
+  \frac{m_1c_1}{k_1+k_2} = \frac{m_1}{\beta\Delta t^2(k_1+k_2)} = \frac{N^2}{4\pi^2\beta},
+\end{equation}
+et la condition \eqref{eq:dtmax} devient une condition sur le nombre de pas par période :
+\begin{equation}
+  N > N_{\min} = 2\pi\sqrt{\beta\,\frac{2e^{-3/2}k_1-k_2}{k_1+k_2}} .
+\end{equation}
 \begin{alamain}
-$2e^{-3/2}k_1 - k_2 = 1{,}339\cdot10^6 - 0{,}066\cdot10^6 = 1{,}273\cdot10^6$~N/mm.\\
-$m_1 = 0{,}5\times2{,}4\cdot10^{-9}\times10^4\times100 + 0{,}5\times7{,}85\cdot10^{-9}\times314\times1000 + 0{,}025 = 0{,}0274$~t.\\
-$\Delta t_{\max} = \sqrt{0{,}0274/(0{,}3\times1{,}273\cdot10^6)} = 2{,}7\cdot10^{-4}$~s $= 0{,}27$~ms.\\
-Période propre du système sain : $T_0 = 2\pi\sqrt{m_1/(k_1+k_2)} = 0{,}594$~ms, donc il suffit de
-$N = T_0/\Delta t > 2{,}2$ pas par période. Le code prend $N = 5$, $\Delta t = 0{,}119$~ms, $m_1c_1 = 6{,}5\cdot10^6$~N/mm.
+Calculer $m_1 = \tfrac12\rho_1A_1L_1 + \tfrac12\rho_2A_2L_2 + m_{\text{grip}}$, puis
+$T_0$, $\Delta t_{\max}$ et $N_{\min}$. Comme $(2e^{-3/2}k_1-k_2)/(k_1+k_2) < 2e^{-3/2}$ et $\beta\le\tfrac12$,
+on a toujours $N_{\min} < 2\pi\sqrt{e^{-3/2}} \simeq 3$ : quelques pas par période propre
+suffisent, bien moins que ce qu'exige la précision du schéma.
 \end{alamain}
 La figure~\ref{fig:resdyn} montre le résidu statique et les résidus dynamiques pour trois pas de
-temps, au même $u_2$ et avec $\tilde u$ pris à l'équilibre précédent. Avec $\Delta t = T_0/2$ (trop
-grand) la bosse subsiste ; avec $T_0/5$ elle a disparu ; avec $T_0/40$ le résidu est une droite
-verticale, la racine est quasiment $\tilde u$ : la masse n'a pas le temps de bouger pendant un pas.
+temps, au même $u_2$ et avec $\tilde u$ pris à l'équilibre précédent. Avec $\Delta t > \Delta t_{\max}$ la
+bosse subsiste ; avec $\Delta t < \Delta t_{\max}$ elle a disparu ; avec $\Delta t \ll \Delta t_{\max}$ le
+résidu est une droite quasi verticale, la racine est presque $\tilde u$ : la masse n'a pas le
+temps de bouger pendant un pas.
 
 \begin{figure}[h]\centering
   \includegraphics[width=.85\textwidth]{figures/explication_residu_dyn.pdf}
   \caption{Le terme d'inertie ajoute au résidu statique une droite de pente $m_1c_1$ passant par
-  $\tilde u$. Dès que cette pente dépasse $1{,}27\cdot10^6$~N/mm, la bosse disparaît et Newton n'a
+  $\tilde u$. Dès que cette pente dépasse $2e^{-3/2}k_1-k_2$, la bosse disparaît et Newton n'a
   plus qu'une racine.}
   \label{fig:resdyn}
 \end{figure}
@@ -519,23 +533,26 @@ emporte le résidu avec lui.
 
 \subsection{Comment se déroule le saut en dynamique}
 Au point limite, la racine du résidu dynamique s'écarte de l'équilibre statique ; la masse
-acquiert une vitesse, $\tilde u$ au pas suivant est plus loin, et ainsi de suite : en quelques
-dizaines de pas $u_1$ passe de $0{,}017$ à $0{,}47$~mm. L'énergie $|W| = 6{,}3$~J devient cinétique
-(le code mesure $K_{\max} = 6{,}26$~J, la petite différence étant l'amortissement numérique).
-Ensuite le ressort 1 est mort ($d = 1$, maintenu par $\kappa$), et la masse oscille librement sur
-le ressort 2 autour de $u_2$ :
+acquiert une vitesse, $\tilde u$ au pas suivant est plus loin, et ainsi de suite : en un nombre de
+pas de l'ordre de $T_{\text{libre}}/(2\Delta t)$, $u_1$ passe de $u_1^{\lim}$ à $u_2$. L'énergie $|W|$
+devient cinétique (le code mesure $K_{\max} \simeq |W|$, l'écart étant l'amortissement numérique
+pendant le saut). Ensuite le ressort 1 est mort ($d = 1$, maintenu par $\kappa$), et la masse
+oscille librement sur le ressort 2 autour de $u_2$ :
 \begin{equation}
   m_1\ddot u_1 + k_2(u_1-u_2) = 0,\qquad T_{\text{libre}} = 2\pi\sqrt{\frac{m_1}{k_2}},\qquad
-  \text{amplitude} = u_2^{\lim}-u_1^{\lim}.
+  \text{amplitude} \simeq u_2^{\lim}-u_1^{\lim} \simeq \frac{F_{\max}}{k_2}.
 \end{equation}
 \begin{alamain}
-$T_{\text{libre}} = 2\pi\sqrt{0{,}0274/65\,973} = 4{,}05$~ms (mesuré : 4,04~ms) ; amplitude $0{,}471-0{,}017 = 0{,}45$~mm.
+Calculer $T_{\text{libre}}$ et comparer à la période mesurée sur \texttt{rupture\_zoom} ; vérifier
+que $t_{\text{hold}}$ couvre plusieurs $T_{\text{libre}}$ ; calculer l'amplitude de force
+$k_2\times\text{amplitude} \simeq F_{\max}$.
 \end{alamain}
-La force $F_2 = k_2(u_2-u_1)$ oscille alors entre $\pm30$~kN : la barre d'acier passe en
+La force $F_2 = k_2(u_2-u_1)$ oscille alors entre $\pm F_{\max}$ environ : la barre d'acier passe en
 compression à chaque demi-période (figure~\ref{fig:zoom}). Deux limites physiques du modèle
-apparaissent ici : une barre $\varnothing20$ de 1~m flambe bien avant 30~kN de compression (charge
-d'Euler 16~kN), et le béton rompu devrait reprendre de la raideur si la fissure se referme
-($u_1 < 0$), ce qui n'arrive pas ici car l'amplitude ramène $u_1$ au plus à $0{,}017$~mm.
+apparaissent ici : la barre peut flamber si $F_{\max}$ dépasse sa charge d'Euler
+$\pi^2E_2I_2/L_2^2$ ($I_2 = \pi D_2^4/64$ pour une section circulaire), et le béton rompu devrait
+reprendre de la raideur si la fissure se referme ($u_1 < 0$), ce qui n'arrive que si l'amplitude
+dépasse $u_2^{\lim}$, c'est-à-dire jamais sans apport d'énergie extérieur.
 
 \begin{figure}[h]\centering
   \includegraphics[width=.8\textwidth]{figures/rupture_zoom.pdf}
@@ -546,10 +563,14 @@ d'Euler 16~kN), et le béton rompu devrait reprendre de la raideur si la fissure
 \end{figure}
 
 \subsection{Le choix de la vitesse de rampe}
-Pour que la dynamique n'intervienne qu'au saut, la rampe doit être lente devant $T_0$ : ici
-$0{,}6$~mm en $0{,}6$~s, soit mille périodes propres. Avant le point limite, la solution dynamique est
-confondue avec la statique (la force d'inertie vaut $m_1\ddot u_1 \simeq 0$). Une vitesse réelle
-d'essai (0,5~mm/min) demanderait $10^6$ pas ; 1~mm/s est un compromis.
+Pour que la dynamique n'intervienne qu'au saut, la rampe doit être lente devant $T_0$ :
+\begin{equation}
+  \frac{T_{\text{rampe}}}{T_0} = \frac{u_2^f}{v_2T_0} \gg 1 .
+\end{equation}
+Avant le point limite, la solution dynamique est alors confondue avec la statique (la force
+d'inertie $m_1\ddot u_1$ est négligeable devant $F$). Le nombre de pas de la rampe,
+$n_{\text{steps}} = u_2^f N/(v_2T_0)$, croît comme $1/v_2$ : une vitesse d'essai réelle demande un
+nombre de pas très grand, d'où un compromis sur $v_2$.
 
 \section{Synthèse}
 
@@ -566,15 +587,20 @@ Dynamique Newmark + NR & la réponse physique (saut en quelques pas, oscillation
 \end{center}
 
 \begin{alamain}
-Vérifications à refaire soi-même, avec les valeurs attendues :
+Vérifications à refaire soi-même, avec les formules à évaluer :
 \begin{enumerate}[nosep]
-  \item $k_1 = 3\cdot10^6$, $k_2 = 6{,}6\cdot10^4$~N/mm ; $k_2/k_1 = 0{,}022 < 0{,}446$ : snap-back.
-  \item $\uc = 0{,}0233$~mm, $F_{\max} = 30$~kN à $u_1 = 0{,}0165$~mm et $u_2 = 0{,}471$~mm.
-  \item Pente la plus raide de $F_1$ : $-0{,}446\,k_1 = -1{,}34\cdot10^6$~N/mm ; longueur critique de barre $49$~mm.
-  \item Point limite : $x_{\lim} = 0{,}720$, $u_2^{\lim} = 0{,}4714$~mm ; rebroussement jusqu'à $u_2 = 0{,}063$~mm.
-  \item Énergie au pic : 6,8~J dans l'acier, 0,25~J dans le béton ; énergie libérée $|W| = 6{,}3$~J.
-  \item $T_0 = 0{,}594$~ms, $\Delta t_{\max} = 0{,}27$~ms, soit plus de 2,2 pas par période.
-  \item $T_{\text{libre}} = 4{,}05$~ms, amplitude 0,45~mm, $F_2$ entre $\pm30$~kN.
+  \item $k_1 = E_1A_1/L_1$, $k_2 = E_2A_2/L_2$ ; snap-back si $k_2/k_1 < 2e^{-3/2}$.
+  \item $\uc = \sqrt{2e}\,f_tL_1/E_1$, $F_{\max} = f_tA_1$ à $u_1^{\text{pic}} = \uc/\sqrt2$ et
+        $u_2^{\text{pic}} = u_1^{\text{pic}} + F_{\max}/k_2$ ; $G_f = e\,f_t^2L_1/E_1$.
+  \item Pente la plus raide de $F_1$ : $-2e^{-3/2}k_1$ en $u_1 = \uc\sqrt{3/2}$ ; longueur critique
+        $L_2^{\text{crit}} = \tfrac{e^{3/2}}{2}\tfrac{E_2A_2}{E_1A_1}L_1$.
+  \item Point limite : $x_{\lim}$ racine de $e^{-x^2}(2x^2-1) = k_2/k_1$ ; $u_2^{\lim}$ par \eqref{eq:ana}.
+  \item Énergies au pic : $F_{\max}^2/2k_2$ dans l'acier, $\tfrac12F_{\max}u_1^{\text{pic}}$ dans le béton,
+        rapport $e^{-1/2}k_1/k_2$ ; $|W| = \Psi_1-\Psi_2-\mathcal D_{\text{branche}}$ ; $v = \sqrt{2|W|/m_1}$.
+  \item $m_1$, $T_0 = 2\pi\sqrt{m_1/(k_1+k_2)}$, $\Delta t_{\max} = \sqrt{m_1/\beta(2e^{-3/2}k_1-k_2)}$,
+        $N_{\min} = T_0/\Delta t_{\max}$.
+  \item $T_{\text{libre}} = 2\pi\sqrt{m_1/k_2}$, amplitude $\simeq F_{\max}/k_2$, $F_2$ entre $\pm F_{\max}$ ;
+        comparer $F_{\max}$ à la charge d'Euler de la barre.
 \end{enumerate}
 \end{alamain}
 
