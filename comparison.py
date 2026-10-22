@@ -3,7 +3,8 @@
 Entry point: assembles the three solutions (analytical, static, dynamic)
 and produces the comparison figures, in particular the static vs dynamic
 comparison of the Newton-Raphson residual curves (one residual curve per
-increment, with the NR iterates as dots on the curve).
+increment, with the NR iterates as dots on the curve) and of the number of
+NR iterations per increment / time step.
 
 Run:  python comparison.py          (shows the figures)
       python comparison.py --save   (also saves them in figures/)
@@ -39,7 +40,7 @@ def main(save=False):
     # -- Fig 1: F-u2, the three solutions -----------------------------------
     plt.figure(figsize=(10, 6))
     plt.plot(u2_ana, F_ana, 'r--', lw=2, label='Analytical (with snap-back)')
-    plt.plot(u2_steps, F_static, 'b-', lw=1.5, label='Static (Newton-Raphson)')
+    plt.plot(u2_steps, F_static, 'b-', lw=1.5, label='Static (Newton-Raphson, stops at the limit point)')
     plt.plot(u2_dyn, F_dyn, 'g-', lw=1.5, label='Dynamic (Newmark-beta)')
     plt.xlabel('u2 [mm]')
     plt.ylabel('Force F2 [N]')
@@ -50,7 +51,7 @@ def main(save=False):
 
     # -- Fig 2: damage of spring 1 ------------------------------------------
     plt.figure(figsize=(8, 5))
-    u1_plot = np.linspace(0.0, max(u1_static.max(), u1_dyn.max()) * 1.1, 500)
+    u1_plot = np.linspace(0.0, max(np.nanmax(u1_static), u1_dyn.max()) * 1.1, 500)
     plt.plot(u1_plot, mdl.damage(u1_plot), 'k-', label='d(u1)')
     plt.plot(u1_static, mdl.damage(u1_static), 'b.', ms=3, label='Static')
     plt.plot(u1_dyn, mdl.damage(u1_dyn), 'g.', ms=3, label='Dynamic')
@@ -63,7 +64,7 @@ def main(save=False):
 
     # -- Fig 3: NR residual comparison, static vs dynamic -------------------
     n_res_demo = 15
-    u1_max_plot = max(u1_static.max(), u1_dyn.max()) * 1.2
+    u1_max_plot = max(np.nanmax(u1_static), u1_dyn.max()) * 1.2
     u1_sweep = np.linspace(0.0, u1_max_plot, 400)
     colors = plt.cm.viridis(np.linspace(0, 1, n_res_demo))
 
@@ -123,11 +124,34 @@ def main(save=False):
     plt.legend()
     plt.tight_layout()
 
+    # -- Fig 6: NR iteration count, static vs dynamic ----------------------
+    it_static = np.array([len(h[2]) - 1 for h in hist_static])
+    it_dyn = np.array([len(h[4]) - 1 for h in hist_dyn])
+    fig, axes = plt.subplots(1, 2, figsize=(14, 4.5))
+    ax = axes[0]
+    ax.plot(u2_steps[:len(it_static)], it_static, 'b.-', ms=3, lw=0.8)
+    ax.axhline(prm.max_iter, color='r', ls='--', lw=1, label=f'max_iter = {prm.max_iter}')
+    ax.set_xlabel('u2 [mm]')
+    ax.set_ylabel('NR iterations per increment')
+    ax.set_title('Static: the NR fails at the limit point (calculation stops)')
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    ax = axes[1]
+    ax.plot(u2_dyn[1:], it_dyn, 'g.-', ms=3, lw=0.8)
+    ax.axhline(prm.max_iter, color='r', ls='--', lw=1, label=f'max_iter = {prm.max_iter}')
+    ax.set_xlabel('u2 [mm]')
+    ax.set_ylabel('NR iterations per time step')
+    ax.set_title('Dynamic: a few iterations everywhere, including through the snap')
+    ax.set_ylim(0, prm.max_iter * 1.1)
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    plt.tight_layout()
+
     if save:
         outdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'figures')
         os.makedirs(outdir, exist_ok=True)
         names = ['force_displacement', 'damage', 'residuals_static_dynamic',
-                 'time_response', 'rupture_zoom']
+                 'time_response', 'rupture_zoom', 'nr_iterations']
         for num, name in zip(plt.get_fignums(), names):
             plt.figure(num).savefig(os.path.join(outdir, f'{name}.pdf'))
             plt.figure(num).savefig(os.path.join(outdir, f'{name}.png'), dpi=150)

@@ -341,7 +341,7 @@ figure~\ref{fig:fu}.
 \begin{figure}[h]\centering
   \includegraphics[width=.8\textwidth]{figures/force_displacement.pdf}
   \caption{Les trois solutions dans le plan $(u_2, F)$. Rouge : branche analytique complète avec
-  son rebroussement. Bleu : statique, saut vertical au point limite. Vert : dynamique, le noeud
+  son rebroussement. Bleu : statique, s'arrête au point limite. Vert : dynamique, le noeud
   oscille après la rupture et $F$ devient alternativement négative.}
   \label{fig:fu}
 \end{figure}
@@ -412,21 +412,38 @@ bout de $\imax$ itérations on déclare l'échec.
 
 \begin{figure}[h]\centering
   \includegraphics[width=.85\textwidth]{figures/explication_residu_nr.pdf}
-  \caption{Résidu statique au premier incrément après le point limite. Les itérés de Newton
-  partis de la solution précédente (rouge) cyclent autour du maximum local, sous l'axe. La
-  relance depuis $u_1 = u_2$ (vert) tombe directement sur la racine : $R(u_2;u_2) = k_1u_2e^{-(u_2/\uc)^2}$
-  est un zéro à la précision machine dès que $u_2 \gg \uc$.}
+    \caption{Résidu statique au premier incrément après le point limite. Les itérés de Newton
+  partis de la solution précédente (rouge) cyclent autour du maximum local, sous l'axe, et ne
+  convergent jamais. La seule racine (point vert) est loin à droite, en $u_1 \simeq u_2$, sur la
+  branche rompue : $R(u_2;u_2) = k_1u_2e^{-(u_2/\uc)^2}$ est un zéro à la précision machine dès
+  que $u_2 \gg \uc$.}
   \label{fig:resnr}
 \end{figure}
 
-\subsection{Le remède : relancer depuis l'autre branche}
-Puisque la seule racine est sur la branche rompue, on relance Newton depuis $u_1^{(0)} = u_2$.
-Là, le résidu est strictement croissant (pente $k_2$) et Newton converge immédiatement. Le
-calcul statique reproduit ainsi le saut : la courbe bleue de la figure~\ref{fig:fu} descend
-verticalement de $F_{\max}$ à $0$ au premier incrément après $u_2^{\lim}$. C'est exactement la
-méthode de Sepasdar et Shakiba (2020) pour les zones cohésives ; l'alternative classique est la
-méthode de longueur d'arc, qui suit la branche en faisant décroître $u_2$, ce que l'on a déjà
-sous forme analytique avec \eqref{eq:ana}.
+\subsection{Ce que fait le code : s'arrêter au point limite}
+Le code ne triche pas : quand Newton n'a pas convergé après $\imax$ itérations, le calcul
+statique s'arrête à cet incrément et le signale. La courbe bleue de la figure~\ref{fig:fu}
+s'interrompt donc au point limite, et la figure~\ref{fig:iter} montre le nombre d'itérations
+par incrément : deux ou trois partout, puis $\imax$ d'un coup. C'est le comportement authentique d'un pilotage en
+déplacement quasi-statique : au-delà, il n'existe pas d'équilibre accessible en continu, et
+seule la dynamique (section~\ref{sec:dyn}) dit ce qui se passe réellement.
+
+Si l'on voulait quand même prolonger le calcul statique, deux familles de remèdes existent.
+La première consiste à relancer Newton depuis l'autre branche, $u_1^{(0)} = u_2$, où le résidu
+est strictement croissant (pente $k_2$) et converge immédiatement ; la courbe statique
+descendrait alors verticalement de $F_{\max}$ à $0$ au premier incrément après $u_2^{\lim}$. C'est
+la méthode de Sepasdar et Shakiba (2020) pour les zones cohésives. La seconde est la méthode
+de longueur d'arc, qui suit la branche en faisant décroître $u_2$, ce que l'on a déjà sous
+forme analytique avec \eqref{eq:ana}.
+
+\begin{figure}[h]\centering
+  \includegraphics[width=\textwidth]{figures/nr_iterations.pdf}
+  \caption{Nombre d'itérations de Newton par incrément (statique, gauche) et par pas de temps
+  (dynamique, droite). En statique le compteur explose à $\imax$ au point limite et le calcul
+  s'arrête ; en dynamique quelques itérations suffisent partout, y compris pendant le saut.
+  C'est la justification pratique du passage en dynamique, détaillée à la section~\ref{sec:dyn}.}
+  \label{fig:iter}
+\end{figure}
 
 \begin{idee}
 L'échec du Newton--Raphson au point limite n'est pas un défaut de précision ni de pas : c'est un
@@ -435,6 +452,7 @@ du sommet du résidu, cela ne crée pas de racine.
 \end{idee}
 
 \section{Le calcul dynamique}
+\label{sec:dyn}
 
 \subsection{Pourquoi la dynamique ?}
 Physiquement, le saut est un événement dynamique : au point limite, si l'on continue d'augmenter
@@ -580,7 +598,7 @@ nombre de pas très grand, d'où un compromis sur $v_2$.
 Méthode & Ce qu'elle donne & Comment elle traite le point limite\\
 \midrule
 Analytique & toute la branche $F(u_2)$, y compris le rebroussement & en paramétrant par $u_1$, on n'a jamais à inverser $R$\\
-Statique NR & la réponse d'un essai piloté en déplacement idéal (saut vertical) & Newton cycle ; relance depuis $u_1 = u_2$\\
+Statique NR & la réponse d'un essai piloté en déplacement idéal, jusqu'au point limite & Newton cycle ; le calcul s'arrête (relance ou longueur d'arc seraient nécessaires pour continuer)\\
 Dynamique Newmark + NR & la réponse physique (saut en quelques pas, oscillations) & l'inertie $m_1/(\beta\Delta t^2)$ rend le résidu monotone si $\Delta t < \Delta t_{\max}$\\
 \bottomrule
 \end{tabular}

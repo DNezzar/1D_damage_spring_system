@@ -2,7 +2,7 @@
 
 Snap-back of a damageable spring in series with an elastic one: closed-form, static Newton-Raphson and dynamic Newmark solutions, with a comparison of the Newton-Raphson residuals.
 
-One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d = 1 - exp(-(u/uc)²)`) in series with an elastic steel bar, under displacement control. Since the bar stiffness is lower than the softening slope of the concrete, the force-displacement response shows a snap-back that quasi-static displacement control cannot follow. The code compares three solutions: the complete equilibrium branch in closed form, a static Newton-Raphson with a restart at the jump, and an implicit Newmark scheme that converts the released energy into kinetic energy. The figures show in particular how the inertia term regularises the non-monotonic Newton-Raphson residual.
+One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d = 1 - exp(-(u/uc)²)`) in series with an elastic steel bar, under displacement control. Since the bar stiffness is lower than the softening slope of the concrete, the force-displacement response shows a snap-back that quasi-static displacement control cannot follow. The code compares three solutions: the complete equilibrium branch in closed form, a static Newton-Raphson that stops at the limit point, and an implicit Newmark scheme that converts the released energy into kinetic energy. The figures show in particular how the inertia term regularises the non-monotonic Newton-Raphson residual, and compare the number of Newton-Raphson iterations per increment in statics (failure at the limit point) and in dynamics (a few iterations throughout).
 
 ## Layout
 
@@ -11,7 +11,7 @@ One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d =
 | `parameters.py` | all physical and numerical parameters, derived quantities (`python parameters.py` prints the summary) |
 | `model.py` | damage law with history variable, static residual and tangent, Newton-Raphson |
 | `analytical_solution.py` | equilibrium branch parametrised by `u1`, peak, energy balance of the jump |
-| `static_solution.py` | `u2` increments, Newton-Raphson, restart at the limit point |
+| `static_solution.py` | `u2` increments, Newton-Raphson; stops at the limit point where the NR no longer converges |
 | `dynamic_solution.py` | implicit predictor-corrector Newmark, ramp then hold of `u2` |
 | `comparison.py` | assembles the three solutions and produces the figures |
 | `note_damage_spring.tex` | calculation note: derivation from the mass-spring system to the residuals, closed-form branch, numerical choices, results |

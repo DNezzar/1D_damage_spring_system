@@ -225,13 +225,14 @@ starting from the solution of the previous increment. The residual \eqref{eq:res
 monotonic in $u_1$ ($k_t<0$ for $u_1\in[3.62\,;\,\simeq12]$~mm, minimum $k_t = -16\,650$~N/mm): at
 a given $u_2$ it may have one or three roots (figure~\ref{fig:res}, left).
 
-\paragraph{Handling of the jump.}
+\paragraph{Behaviour at the limit point.}
 For $u_2 > u_2^{\lim}$ there is no longer a root in the neighbourhood of the previous iterate:
-the Newton--Raphson cycles without converging (in the original scripts this case was not
-detected and a non-converged value was stored). The solver now checks convergence and, on
-failure, restarts the Newton--Raphson from the fully damaged branch ($u_1^{(0)}=u_2$): the
-jump occurs at the first increment after the limit point ($u_2 = 75.08$~mm), consistently with
-the analytical solution. Away from the jump, 4 iterations suffice.
+the Newton--Raphson cycles around the local maximum of the residual without converging. The
+solver checks convergence and, on failure, stops the quasi-static calculation at that increment
+with a message: no restart on the damaged branch and no arc-length continuation are used, so the
+static curve ends at the limit point (figure~\ref{fig:iter}). This is the genuine behaviour of displacement control
+without any numerical device; the dynamic solution of \S\ref{sec:dyn} is the physical
+continuation. Away from the limit point, a few iterations suffice.
 
 \section{Dynamic solution}
 \label{sec:dyn}
@@ -303,7 +304,7 @@ $0.66$ at the low point ($u_1\simeq5$~mm) and spring 1 ``healed'', which is non-
 \begin{figure}[h]\centering
   \includegraphics[width=.85\textwidth]{figures/force_displacement.pdf}
   \caption{Force--displacement response $F_2(u_2)$: analytical (complete branch with snap-back),
-  static (jump at the limit point) and dynamic (passes the limit point, then jumps and oscillates).}
+  static (stops at the limit point) and dynamic (passes the limit point, then jumps and oscillates).}
   \label{fig:fu}
 \end{figure}
 \begin{figure}[h]\centering
@@ -314,6 +315,14 @@ $0.66$ at the low point ($u_1\simeq5$~mm) and spring 1 ``healed'', which is non-
   dynamic, the term $m_1c_1(u_1-\tilde u)$ makes the residual strictly increasing; the curves
   shift vertically with $\tilde u$, which carries the kinematic history.}
   \label{fig:res}
+\end{figure}
+\begin{figure}[h]\centering
+  \includegraphics[width=\textwidth]{figures/nr_iterations.pdf}
+  \caption{Number of Newton--Raphson iterations per increment (static, left) and per time step
+  (dynamic, right). In statics the count explodes to \texttt{max\_iter} at the limit point and
+  the calculation stops; in dynamics a few iterations suffice everywhere, including through
+  the snap. This is the practical justification of the dynamic approach.}
+  \label{fig:iter}
 \end{figure}
 \begin{figure}[h]\centering
   \includegraphics[width=.85\textwidth]{figures/time_response.pdf}
@@ -330,7 +339,7 @@ $0.66$ at the low point ($u_1\simeq5$~mm) and spring 1 ``healed'', which is non-
 \texttt{parameters.py} & physical and numerical parameters, derived quantities\\
 \texttt{model.py} & damage law with $\kappa$, static residual/tangent, Newton--Raphson\\
 \texttt{analytical\_solution.py} & branch \eqref{eq:ana}, peak, energy balance\\
-\texttt{static\_solution.py} & $u_2$ increments, Newton--Raphson, restart at the jump, iterate history\\
+\texttt{static\_solution.py} & $u_2$ increments, Newton--Raphson, stop at the limit point, iterate history\\
 \texttt{dynamic\_solution.py} & predictor--corrector Newmark, ramp + hold, iterate history\\
 \texttt{comparison.py} & assembles the three solutions, figures (\texttt{--save} writes them to \texttt{figures/})\\
 \bottomrule
@@ -345,7 +354,8 @@ of the free oscillations; conservation of $d=1$ after the jump.
 \paragraph{Limitations and extensions.}
 Non-physical mass (regularisation parameter); no damping, hence perpetual oscillations after
 the jump (a damping $c\,\dot u_1$ or a dissipative Newmark $\gamma>\tfrac12$ would make them
-decay); spring 2 is assumed massless; the restart at the static jump assumes that the other
-stable branch is the fully damaged one, which is the case here.
+decay); spring 2 is assumed massless; the static calculation stops at the limit point (a
+restart of the Newton--Raphson on the fully damaged branch, or an arc-length method, would be
+needed to continue it quasi-statically).
 
 \end{document}

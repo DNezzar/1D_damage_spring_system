@@ -4,10 +4,11 @@ Static solution: quasi-static Newton-Raphson, u2 imposed by increasing
 increments. At each increment we start from the previous solution (warm
 start) and solve res_static(u1, u2) = 0.
 
-Since the residual can have several roots (unstable branch of the
-snap-back), the displacement-controlled NR follows the nearest stable
-branch and "jumps" over the unstable zone: the resulting F-u2 curve thus
-differs from the analytical solution around the peak.
+Beyond the limit point of the snap-back there is no root of the residual
+near the previous solution: the NR cycles and does not converge. No trick
+is used (no restart on the other branch, no arc-length): the quasi-static
+calculation simply stops at the first increment where the NR fails, with
+a message. The remaining entries of the output arrays are NaN.
 """
 
 import numpy as np
@@ -21,19 +22,20 @@ def solve(inc=prm.inc, u2_f=None):
     Solve the static problem over `inc` increments from 0 to u2_f
     (defaults from parameters.py).
 
-    Returns:
+        Returns:
         u2_steps : (inc,) imposed displacements
-        u1_sol   : (inc,) equilibrium solutions u1
-        F_sol    : (inc,) corresponding force F2
-        history  : list of (u2n, kappa, hist_u1, hist_res) per increment,
-                   useful to plot the residual + the NR iterates
+        u1_sol   : (inc,) equilibrium solutions u1 (NaN after the limit point)
+        F_sol    : (inc,) corresponding force F2 (NaN after the limit point)
+        history  : list of (u2n, kappa, hist_u1, hist_res) per increment up to
+                   and including the failed one, useful to plot the residual
+                   + the NR iterates
     """
     if u2_f is None:
         u2_f = mdl.u2_f
 
     u2_steps = np.linspace(0.0, u2_f, inc)
-    u1_sol = np.empty(inc)
-    F_sol = np.empty(inc)
+    u1_sol = np.full(inc, np.nan)
+    F_sol = np.full(inc, np.nan)
     history = []
 
     u1_prev = 0.0
@@ -44,13 +46,15 @@ def solve(inc=prm.inc, u2_f=None):
         u1_n, ok, hist_x, hist_r = mdl.newton_raphson(residual, tangent, u1_prev)
         if not ok:
             # Beyond the limit point there is no root near the previous iterate:
-            # the NR cycles. Restart from the fully damaged branch (u1 ~ u2),
-            # which performs the snap to the other stable branch.
-            u1_n, ok, hist_x2, hist_r2 = mdl.newton_raphson(residual, tangent, u2n)
-            hist_x = np.concatenate([hist_x, hist_x2])
-            hist_r = np.concatenate([hist_r, hist_r2])
-            print(f"[Static] step {n} (u2={u2n:.3f} mm): branch jump, "
-                  f"NR restarted from u1=u2 -> {'converged' if ok else 'FAILED'}")
+            # the NR cycles around the local maximum of the residual. The
+            # quasi-static displacement-controlled calculation cannot go
+            # further; it stops here.
+            history.append((u2n, kappa, hist_x, hist_r))
+            print(f"[Static] step {n} (u2={u2n:.4g} mm): NR did not converge after "
+                  f"{len(hist_x) - 1} iterations, |R| = {abs(hist_r[-1]):.3g} N. "
+                  f"No root near the previous solution (limit point reached): "
+                  f"the quasi-static calculation stops here.")
+            break
         u1_sol[n] = u1_n
         F_sol[n] = mdl.k2 * (u2n - u1_n)
         history.append((u2n, kappa, hist_x, hist_r))
@@ -80,7 +84,7 @@ if __name__ == "__main__":
 
     # -- Fig 2: residual R(u1) per increment + NR iterates
     n_res_demo = 15
-    u1_sweep = np.linspace(0.0, u1_sol.max() * 1.2, 400)
+    u1_sweep = np.linspace(0.0, np.nanmax(u1_sol) * 1.2, 400)
     colors = plt.cm.viridis(np.linspace(0, 1, n_res_demo))
     idx_demo = np.linspace(0, len(history) - 1, n_res_demo).astype(int)
 
