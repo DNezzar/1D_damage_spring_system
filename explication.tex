@@ -104,13 +104,26 @@ effective du ressort 1 est la raideur \emph{sécante}
 \end{equation}
 On choisit la loi
 \begin{equation}
-  d(\kappa) = 1-\exp\!\left(-\frac{\kappa^2}{\uc^2}\right),\qquad
-  \kappa(t) = \max_{\tau\le t}u_1(\tau).
+  \hat d(u_1) = 1-\exp\!\left(-\frac{\langle u_1\rangle_+^2}{\uc^2}\right),\qquad
+  d(t) = \max_{\tau\le t}\hat d\bigl(u_1(\tau)\bigr).
   \label{eq:loi}
 \end{equation}
-La variable d'histoire $\kappa$ garantit l'\textbf{irréversibilité} : si $u_1$ diminue (décharge),
-$\kappa$ ne bouge pas, $d$ reste figé et le ressort décharge élastiquement avec la raideur
-$k_1(1-d)$. Tant que le chargement est monotone, $\kappa = u_1$ et on peut écrire $d(u_1)$.
+$\hat d$ est la valeur « d'essai » calculée à partir de l'allongement courant (en traction
+seulement, d'où la partie positive $\langle u_1\rangle_+$), et $d$ est la plus grande valeur
+atteinte jusqu'ici. C'est l'\textbf{irréversibilité}, portée par $d$ lui-même : si $u_1$ diminue
+(décharge), $\hat d(u_1)$ passe sous $d$, $d$ reste figé et le ressort décharge élastiquement avec la
+raideur $k_1(1-d)$. Tant que le chargement est monotone, $d = \hat d(u_1)$ et on écrit
+simplement $d(u_1)$. La figure~\ref{fig:law} montre $d(u_1)$, la raideur relative $1-d$ et la
+force $F_1$.
+
+\begin{figure}[h]\centering
+  \includegraphics[width=\textwidth]{figures/damage_law.pdf}
+  \caption{Loi d'endommagement du ressort 1. Gauche : $d(u_1)$ et raideur sécante relative
+  $1-d$ ; droite : force $F_1 = k_1(1-d)u_1$. Les repères sont le pic de force $u_1 = \uc/\sqrt2$
+  ($d = 1-e^{-1/2}$), $u_1 = \uc$ ($d = 1-e^{-1}$) et le point de descente la plus raide
+  $u_1 = \uc\sqrt{3/2}$ où $\dd F_1/\dd u_1 = -2e^{-3/2}k_1$.}
+  \label{fig:law}
+\end{figure}
 
 \subsection{La courbe force--allongement du ressort 1}
 En charge, avec $x = u_1/\uc$ :
@@ -569,7 +582,7 @@ Au point limite, la racine du résidu dynamique s'écarte de l'équilibre statiq
 acquiert une vitesse, $\tilde u$ au pas suivant est plus loin, et ainsi de suite : en un nombre de
 pas de l'ordre de $T_{\text{libre}}/(2\Delta t)$, $u_1$ passe de $u_1^{\lim}$ à $u_2$. L'énergie $|W|$
 devient cinétique (le code mesure $K_{\max} \simeq |W|$, l'écart étant l'amortissement numérique
-pendant le saut). Ensuite le ressort 1 est mort ($d = 1$, maintenu par $\kappa$), et la masse
+pendant le saut). Ensuite le ressort 1 est mort ($d = 1$, maintenu par l'irréversibilité), et la masse
 oscille librement sur le ressort 2 autour de $u_2$ :
 \begin{equation}
   m_1\ddot u_1 + k_2(u_1-u_2) = 0,\qquad T_{\text{libre}} = 2\pi\sqrt{\frac{m_1}{k_2}},\qquad

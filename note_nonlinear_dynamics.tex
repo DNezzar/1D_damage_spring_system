@@ -25,7 +25,7 @@ equation of motion at time step $n+1$ reads
   \label{eq:motion}
 \end{equation}
 where $\boldsymbol\alpha^n$ denotes the internal (history) variables, known at the end of step $n$
-and frozen during the solution of step $n+1$ (for a damage model: the history variable $\kappa$).
+and frozen during the solution of step $n+1$ (for a damage model: the damage $d$ reached so far).
 
 \section{Newmark $\beta$ scheme in predictor--corrector form}
 For a time step $\Delta t = t^{n+1}-t^n$ (Belytschko), the displacement and velocity at $n+1$ are
@@ -92,13 +92,13 @@ and \eqref{eq:update} is a linear solve.
         $\|\Delta u_i^{n+1}\| \le \varepsilon_u\|u^{n+1}\|$ (relative tolerance); stop with an error
         after $i_{\max}$ iterations.
   \item Correctors: $\ddot u^{n+1}$ and $\dot u^{n+1}$ from \eqref{eq:acc_vel}.
-  \item Update of the internal variables $\boldsymbol\alpha^{n+1}$ (e.g. $\kappa^{n+1} = \max(\kappa^n, u^{n+1})$).
+  \item Update of the internal variables $\boldsymbol\alpha^{n+1}$ (e.g. $d^{n+1} = \max(d^n, \hat d(u^{n+1}))$ for a damage model).
 \end{enumerate}
 At $t = 0$ the acceleration is obtained from the equation of motion itself:
 $\ddot u^0 = M^{-1}\bigl(f^{\text{ext}}(u^0,0) - C\dot u^0 - f^{\text{int}}(u^0)\bigr)$.
 
 \section{Application: two springs in series, spring 1 damageable}
-Node 1 of mass $m_1$ between a damageable spring $k_1^d(u_1) = k_1\bigl(1-d(\kappa)\bigr)$ and an
+Node 1 of mass $m_1$ between a damageable spring $k_1^d(u_1) = k_1\bigl(1-d\bigr)$, $d = \max\hat d(u_1)$ and an
 elastic spring $k_2$ whose other end is displacement controlled, $u_2(t)$. Then
 \begin{equation}
   M = m_1,\quad C = 0,\quad f^{\text{int}}(u_1) = \bigl(k_1^d(u_1)+k_2\bigr)u_1,\quad

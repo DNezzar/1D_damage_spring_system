@@ -31,7 +31,7 @@ def solve(inc=prm.inc, u2_f=None):
         u2_steps : (inc,) imposed displacements
         u1_sol   : (inc,) equilibrium solutions u1 (NaN after the limit point)
         F_sol    : (inc,) corresponding force F2 (NaN after the limit point)
-        history  : list of (u2n, kappa, hist_u1, hist_res) per increment up to
+        history  : list of (u2n, d_prev, hist_u1, hist_res) per increment up to
                    and including the failed one, useful to plot the residual
                    + the NR iterates
     """
@@ -44,17 +44,17 @@ def solve(inc=prm.inc, u2_f=None):
     history = []
 
     u1_prev = 0.0
-    kappa = 0.0  # damage history variable (max of u1 reached)
+    d_prev = 0.0  # damage history variable (damage reached so far)
     for n, u2n in enumerate(u2_steps):
-        residual = lambda u, u2n=u2n, kappa=kappa: mdl.res_static(u, u2n, kappa)
-        tangent = lambda u, kappa=kappa: mdl.tangent_static(u, kappa)
+        residual = lambda u, u2n=u2n, d_prev=d_prev: mdl.res_static(u, u2n, d_prev)
+        tangent = lambda u, d_prev=d_prev: mdl.tangent_static(u, d_prev)
         u1_n, ok, hist_x, hist_r = mdl.newton_raphson(residual, tangent, u1_prev)
         if not ok:
             # Beyond the limit point there is no root near the previous iterate:
             # the NR cycles around the local maximum of the residual. The
             # quasi-static displacement-controlled calculation cannot go
             # further; it stops here.
-            history.append((u2n, kappa, hist_x, hist_r))
+            history.append((u2n, d_prev, hist_x, hist_r))
             print(f"[Static] step {n} (u2={u2n:.4g} mm): NR did not converge after "
                   f"{len(hist_x) - 1} iterations, |R| = {abs(hist_r[-1]):.3g} N. "
                   f"No root near the previous solution (limit point reached): "
@@ -62,9 +62,9 @@ def solve(inc=prm.inc, u2_f=None):
             break
         u1_sol[n] = u1_n
         F_sol[n] = mdl.k2 * (u2n - u1_n)
-        history.append((u2n, kappa, hist_x, hist_r))
+        history.append((u2n, d_prev, hist_x, hist_r))
         u1_prev = u1_n
-        kappa = max(kappa, u1_n)
+        d_prev = float(mdl.damage_history(u1_n, d_prev))
 
     return u2_steps, u1_sol, F_sol, history
 
@@ -95,8 +95,8 @@ if __name__ == "__main__":
 
     plt.figure(figsize=(8, 6))
     for color, i in zip(colors, idx_demo):
-        u2n, kappa, hist_x, hist_r = history[i]
-        plt.plot(u1_sweep, mdl.res_static(u1_sweep, u2n, kappa), color=color, lw=1.2, alpha=0.8)
+        u2n, d_prev, hist_x, hist_r = history[i]
+        plt.plot(u1_sweep, mdl.res_static(u1_sweep, u2n, d_prev), color=color, lw=1.2, alpha=0.8)
         plt.plot(hist_x, hist_r, 'o', color=color, ms=5, mec='k', mew=0.4)
     plt.axhline(0, color='k', lw=0.8)
     plt.xlabel('u1 [mm]')

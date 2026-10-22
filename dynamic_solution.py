@@ -32,13 +32,13 @@ def predictors(u_n, v_n, a_n, dt):
     return u_tilde, v_tilde
 
 
-def res_dynamic(u1, u2, u_tilde, c1, kappa=0.0):
+def res_dynamic(u1, u2, u_tilde, c1, d_prev=0.0):
     a = c1 * (u1 - u_tilde)
-    return mdl.m1 * a + mdl.res_static(u1, u2, kappa)
+    return mdl.m1 * a + mdl.res_static(u1, u2, d_prev)
 
 
-def tangent_dynamic(u1, c1, kappa=0.0):
-    return mdl.m1 * c1 + mdl.tangent_static(u1, kappa)
+def tangent_dynamic(u1, c1, d_prev=0.0):
+    return mdl.m1 * c1 + mdl.tangent_static(u1, d_prev)
 
 
 def solve(dt=prm.dt, n_steps=prm.n_steps, n_hold=prm.n_hold, u2_f=prm.u2_f):
@@ -54,7 +54,7 @@ def solve(dt=prm.dt, n_steps=prm.n_steps, n_hold=prm.n_hold, u2_f=prm.u2_f):
 
     Returns:
         t, u2_t, u1_sol, v1_sol, a1_sol, F_sol : time histories
-        history : list of (u2_np1, u_tilde, c1, kappa, hist_u1, hist_res)
+        history : list of (u2_np1, u_tilde, c1, d_prev, hist_u1, hist_res)
                   per time step, to plot the residual + the NR iterates
     """
     c1 = 1.0 / (beta_nm * dt**2)
@@ -68,16 +68,16 @@ def solve(dt=prm.dt, n_steps=prm.n_steps, n_hold=prm.n_hold, u2_f=prm.u2_f):
     u2_t = np.zeros(n_tot + 1)
     F_sol = np.zeros(n_tot + 1)
     history = []
-    kappa = 0.0  # damage history variable (max of u1 reached)
+    d_prev = 0.0  # damage history variable (damage reached so far)
 
     for n in range(n_tot):
         u2_np1 = min((n + 1) * dt * v2_rate, u2_f)
         u_tilde, v_tilde = predictors(u1_sol[n], v1_sol[n], a1_sol[n], dt)
 
         u1_np1, ok, hist_x, hist_r = mdl.newton_raphson(
-            lambda u, u2_np1=u2_np1, u_tilde=u_tilde, kappa=kappa:
-                res_dynamic(u, u2_np1, u_tilde, c1, kappa),
-            lambda u, kappa=kappa: tangent_dynamic(u, c1, kappa),
+            lambda u, u2_np1=u2_np1, u_tilde=u_tilde, d_prev=d_prev:
+                res_dynamic(u, u2_np1, u_tilde, c1, d_prev),
+            lambda u, d_prev=d_prev: tangent_dynamic(u, c1, d_prev),
             u_tilde,
         )
         if not ok:
@@ -93,8 +93,8 @@ def solve(dt=prm.dt, n_steps=prm.n_steps, n_hold=prm.n_hold, u2_f=prm.u2_f):
         v1_sol[n + 1] = v1_np1
         F_sol[n + 1] = mdl.k2 * (u2_np1 - u1_np1)
 
-        history.append((u2_np1, u_tilde, c1, kappa, hist_x, hist_r))
-        kappa = max(kappa, u1_np1)
+        history.append((u2_np1, u_tilde, c1, d_prev, hist_x, hist_r))
+        d_prev = float(mdl.damage_history(u1_np1, d_prev))
 
     return t, u2_t, u1_sol, v1_sol, a1_sol, F_sol, history
 
@@ -138,8 +138,8 @@ if __name__ == "__main__":
 
     plt.figure(figsize=(8, 6))
     for color, i in zip(colors, idx_demo):
-        u2_np1, u_tilde, c1, kappa, hist_x, hist_r = history[i]
-        plt.plot(u1_sweep, res_dynamic(u1_sweep, u2_np1, u_tilde, c1, kappa),
+        u2_np1, u_tilde, c1, d_prev, hist_x, hist_r = history[i]
+        plt.plot(u1_sweep, res_dynamic(u1_sweep, u2_np1, u_tilde, c1, d_prev),
                  color=color, lw=1.2, alpha=0.8)
         plt.plot(hist_x, hist_r, 'o', color=color, ms=5, mec='k', mew=0.4)
     plt.axhline(0, color='k', lw=0.8)

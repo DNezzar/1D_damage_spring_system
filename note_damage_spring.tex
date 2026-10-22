@@ -43,16 +43,29 @@ The focus of the comparison is the shape of the residual $R(u_1)$ that the
 Newton--Raphson has to cancel, and the way the inertia term regularises its non-monotonicity.
 
 \subsection{Damage law}
-The damage of spring 1 is a variable $d\in[0,1]$ depending on the maximum displacement reached
-$\kappa = \max_{\tau\le t} u_1(\tau)$ (history variable, irreversibility):
+The damage of spring 1 is a variable $d\in[0,1]$. Its trial value is a function of the
+current elongation (tension only), and irreversibility is enforced on the damage itself: the
+damage at time $t$ is the largest trial value reached so far,
 \begin{equation}
-  d(\kappa) = 1 - \exp\!\left(-\frac{\kappa^2}{u_c^2}\right),\qquad
-  \kd(u_1) = k_1\,\bigl(1-d(\kappa)\bigr),\qquad
-  F_1 = \kd\,u_1 .
+  \hat d(u_1) = 1 - \exp\!\left(-\frac{\langle u_1\rangle_+^2}{u_c^2}\right),\qquad
+  d(t) = \max_{\tau\le t}\hat d\bigl(u_1(\tau)\bigr),\qquad
+  \kd = k_1\,(1-d),\qquad F_1 = \kd\,u_1 .
 \end{equation}
-On loading ($u_1=\kappa$), $d'(u_1) = \dfrac{2u_1}{u_c^2}\exp(-u_1^2/u_c^2)$; on unloading
-($u_1<\kappa$), $d$ is frozen and the spring unloads elastically with the secant stiffness
-$k_1(1-d)$. For monotonic loading (analytical and static cases), $\kappa=u_1$ at all times.
+On loading ($\hat d(u_1)\ge d$), $d = \hat d(u_1)$ and $d'(u_1) = \dfrac{2u_1}{u_c^2}\exp(-u_1^2/u_c^2)$;
+on unloading ($\hat d(u_1) < d$), $d$ is frozen and the spring unloads elastically with the secant
+stiffness $k_1(1-d)$. Since $\hat d$ is monotonic in $u_1\ge0$, this is equivalent to a history
+variable $\kappa = \max u_1$ with $d = \hat d(\kappa)$; the formulation on $d$ is the one used in
+the code (\texttt{model.damage\_history}). Figure~\ref{fig:law} shows $d(u_1)$, $\kd/k_1$ and
+$F_1(u_1)$.
+
+\begin{figure}[h]\centering
+  \includegraphics[width=\textwidth]{figures/damage_law.pdf}
+  \caption{Damage law of spring 1. Left: $d(u_1)$ and the relative secant stiffness $1-d$;
+  right: force $F_1 = k_1(1-d)u_1$. The marks are the force peak $u_1 = u_c/\sqrt2$
+  ($d = 1-e^{-1/2}$), $u_1 = u_c$ ($d = 1-e^{-1}$) and the point of steepest descent
+  $u_1 = u_c\sqrt{3/2}$ where $\dd F_1/\dd u_1 = -2e^{-3/2}k_1$.}
+  \label{fig:law}
+\end{figure}
 
 \subsection{Parameters}
 Consistent unit system N / mm / s, hence mass in tonne ($1\,\mathrm{t}=1000$~kg).
@@ -99,14 +112,14 @@ the first row is the equilibrium of node 1 with the known term $k_2u_2$ moved to
 side, and the second row gives the reaction $F_2 = k_2(u_2-u_1)$, computed after the solve.
 
 \subsection{Damage law and its derivative}
-With $x = u_1/u_c$ and $\kappa = u_1$ on loading,
+With $x = u_1/u_c$ and $d = \hat d(u_1)$ on loading,
 \begin{equation}
   \kd(u_1) = k_1e^{-x^2},\qquad
   \frac{\dd\kd}{\dd u_1} = -\frac{2k_1u_1}{u_c^2}e^{-x^2},\qquad
   \frac{\dd F_1}{\dd u_1} = \kd + u_1\frac{\dd\kd}{\dd u_1} = k_1e^{-x^2}(1-2x^2).
   \label{eq:dkd}
 \end{equation}
-On unloading ($u_1<\kappa$), $\kd$ is constant and its derivative is zero.
+On unloading ($\hat d(u_1) < d$), $\kd$ is constant and its derivative is zero.
 
 \subsection{Dynamic residual (Newmark)}
 Substituting the Newmark relation $\ddot u_1^{n+1} = c_1(u_1^{n+1}-\tilde u)$,
@@ -151,7 +164,7 @@ strictly increasing and has a single root.
 
 \subsection{Closed-form branch}
 $R$ is linear in $u_2$, so the equilibrium branch is obtained by parametrising with $u_1$
-(monotonic loading, $\kappa = u_1$):
+(monotonic loading, $d = \hat d(u_1)$):
 \begin{equation}
   u_2(u_1) = u_1\Bigl(1+\frac{k_1}{k_2}e^{-x^2}\Bigr),\qquad
   F(u_1) = k_2\bigl(u_2-u_1\bigr) = k_1u_1e^{-x^2}.
@@ -277,7 +290,7 @@ case augmented by the inertia term:
 The Newton--Raphson is initialised with the predictor $\tilde u$. After convergence,
 $a_{n+1}$ and $v_{n+1}$ are updated with the corrector relations; at $t=0$,
 $a_0 = (f^{\text{ext}}(0) - f^{\text{int}}(u_0))/m_1$. The history variable
-$\kappa$ is frozen during the iterations of a step and updated after convergence.
+$d$ is frozen during the iterations of a step and updated after convergence.
 
 \paragraph{Choice of the time step: inertial regularisation.}
 From \eqref{eq:resdyn}, inertia adds to the tangent the constant $m_1c_1 = m_1/(\beta\Delta t^2)$.
@@ -303,7 +316,7 @@ branch during the hold. Since the released energy (\S\ref{sec:ana}) has no dissi
 mechanism (no damping, spring 1 already fully damaged), the mass then oscillates freely on
 spring 2 about $u_1 = u_2^f$ with period $2\pi\sqrt{m_1/k_2} = 0.574$~s and amplitude
 $\simeq73$~mm (figure~\ref{fig:time}); $F_2$ then becomes alternately negative (spring 2 in
-compression). Thanks to irreversibility ($\kappa$), damage stays at $d=1$ during these
+compression). Thanks to irreversibility ($d = \max\hat d$), damage stays at $d=1$ during these
 oscillations; with the reversible law $d=d(u_1)$ of the original scripts, $d$ dropped back to
 $0.66$ at the low point ($u_1\simeq5$~mm) and spring 1 ``healed'', which is non-physical.
 
@@ -346,11 +359,12 @@ $0.66$ at the low point ($u_1\simeq5$~mm) and spring 1 ``healed'', which is non-
 \begin{tabular}{ll}
 \toprule
 \texttt{parameters.py} & physical and numerical parameters, derived quantities\\
-\texttt{model.py} & damage law with $\kappa$, static residual/tangent, Newton--Raphson\\
+\texttt{model.py} & damage law with irreversibility on $d$, static residual/tangent, Newton--Raphson\\
 \texttt{analytical\_solution.py} & branch \eqref{eq:ana}, peak, energy balance\\
 \texttt{static\_solution.py} & $u_2$ increments, Newton--Raphson, iterate history\\
 \texttt{dynamic\_solution.py} & predictor--corrector Newmark, ramp + hold, iterate history\\
 \texttt{comparison.py} & assembles the three solutions, figures (\texttt{--save} writes them to \texttt{figures/})\\
+\texttt{export\_data.py} & writes every computed curve to \texttt{data/*.dat} (pgfplots, Manim)\\
 \bottomrule
 \end{tabular}
 \end{center}

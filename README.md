@@ -14,6 +14,8 @@ One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d =
 | `static_solution.py` | `u2` increments, plain Newton-Raphson; at the limit point the NR either jumps by itself onto the damaged branch (coarse increments) or fails and the calculation stops (fine increments) |
 | `dynamic_solution.py` | implicit predictor-corrector Newmark, ramp then hold of `u2` |
 | `comparison.py` | assembles the three solutions and produces the figures |
+| `export_data.py` | writes every computed curve to plain-text `.dat` files in `data/` (pgfplots `\addplot table`, Manim `numpy.loadtxt`) |
+| `data/` | exported data: parameters, damage law, analytical branch, static and dynamic histories, residual curves, NR iterates, energies |
 | `note_damage_spring.tex` | calculation note: derivation from the mass-spring system to the residuals, closed-form branch, numerical choices, results |
 | `note_nonlinear_dynamics.tex` | Newmark scheme in predictor-corrector form and Newton-Raphson for nonlinear dynamics (residual, consistent tangent, algorithm) |
 | `explication.tex` | step-by-step pedagogical note (in French): damage law, graphical equilibrium construction, snap-back criterion in stiffness and in bar lengths, closed-form branch, why Newton-Raphson cycles at the limit point and how inertia regularises it, with hand-calculation boxes |
@@ -25,6 +27,7 @@ One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d =
 pip install numpy matplotlib
 python comparison.py          # shows the figures
 python comparison.py --save   # also saves them in figures/
+python export_data.py         # writes the .dat files in data/
 pdflatex note_damage_spring.tex
 ```
 
