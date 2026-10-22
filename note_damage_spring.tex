@@ -227,9 +227,14 @@ a given $u_2$ it may have one or three roots (figure~\ref{fig:res}, left).
 
 \paragraph{Behaviour at the limit point.}
 For $u_2 > u_2^{\lim}$ there is no longer a root in the neighbourhood of the previous iterate:
-the Newton--Raphson cycles around the local maximum of the residual without converging. The
-solver checks convergence and, on failure, stops the quasi-static calculation at that increment
-with a message: no restart on the damaged branch and no arc-length continuation are used, so the
+the Newton--Raphson cycles around the local maximum of the residual without converging, or,
+with coarse increments, may take a huge step from the flat top of the residual and land by
+accident on the damaged branch. The optional backtracking line search
+(\texttt{parameters.line\_search}) removes this erratic behaviour: the Newton direction is kept
+but the step length $\alpha\in(0,1]$ is halved until $|R|$ decreases, so the iterates climb to the
+local maximum $R(u_1^{\lim};u_2) = -k_2(u_2-u_2^{\lim})$ and stall there in a few iterations,
+whatever the increment size. The solver checks convergence and, on failure (stall or
+\texttt{max\_iter}), stops the quasi-static calculation at that increment with a message: no restart on the damaged branch and no arc-length continuation are used, so the
 static curve ends at the limit point (figure~\ref{fig:iter}). This is the genuine behaviour of displacement control
 without any numerical device; the dynamic solution of \S\ref{sec:dyn} is the physical
 continuation. Away from the limit point, a few iterations suffice.

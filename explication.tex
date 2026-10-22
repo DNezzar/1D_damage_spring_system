@@ -421,8 +421,19 @@ bout de $\imax$ itérations on déclare l'échec.
 \end{figure}
 
 \subsection{Ce que fait le code : s'arrêter au point limite}
-Le code ne triche pas : quand Newton n'a pas convergé après $\imax$ itérations, le calcul
-statique s'arrête à cet incrément et le signale. La courbe bleue de la figure~\ref{fig:fu}
+Le code ne triche pas : quand Newton n'a pas convergé, le calcul statique s'arrête à cet
+incrément et le signale.
+
+Un détail compte ici : avec des incréments grossiers, l'itéré qui tombe près du sommet du
+résidu voit une tangente presque nulle et fait un pas $-R/k_t$ gigantesque, qui peut par
+accident retomber dans la zone monotone et « converger » sur la branche rompue, ou partir vers
+$u_1<0$. Pour éviter ce hasard, le code propose une \textbf{recherche linéaire} (paramètre
+\texttt{line\_search}) : on garde la direction de Newton mais on réduit la longueur du pas,
+$\alpha\in(0,1]$ divisé par deux tant que $|R|$ ne diminue pas. Les itérés montent alors
+sagement jusqu'au sommet du résidu, en $u_1 = u_1^{\lim}$, où plus aucun pas ne fait décroître
+$|R|$ : Newton est déclaré bloqué après quelques itérations, avec un résidu final égal à
+$k_2(u_2-u_2^{\lim})$, quelle que soit la taille d'incrément. C'est la manière propre de montrer
+qu'il n'y a pas de racine. La courbe bleue de la figure~\ref{fig:fu}
 s'interrompt donc au point limite, et la figure~\ref{fig:iter} montre le nombre d'itérations
 par incrément : deux ou trois partout, puis $\imax$ d'un coup. C'est le comportement authentique d'un pilotage en
 déplacement quasi-statique : au-delà, il n'existe pas d'équilibre accessible en continu, et

@@ -9,9 +9,9 @@ One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d =
 | File | Role |
 |---|---|
 | `parameters.py` | all physical and numerical parameters, derived quantities (`python parameters.py` prints the summary) |
-| `model.py` | damage law with history variable, static residual and tangent, Newton-Raphson |
+| `model.py` | damage law with history variable, static residual and tangent, Newton-Raphson with optional backtracking line search |
 | `analytical_solution.py` | equilibrium branch parametrised by `u1`, peak, energy balance of the jump |
-| `static_solution.py` | `u2` increments, Newton-Raphson; stops at the limit point where the NR no longer converges |
+| `static_solution.py` | `u2` increments, Newton-Raphson (line search on/off via `parameters.line_search`); stops at the limit point where the NR no longer converges |
 | `dynamic_solution.py` | implicit predictor-corrector Newmark, ramp then hold of `u2` |
 | `comparison.py` | assembles the three solutions and produces the figures |
 | `note_damage_spring.tex` | calculation note: derivation from the mass-spring system to the residuals, closed-form branch, numerical choices, results |
