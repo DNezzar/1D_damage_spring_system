@@ -227,17 +227,19 @@ a given $u_2$ it may have one or three roots (figure~\ref{fig:res}, left).
 
 \paragraph{Behaviour at the limit point.}
 For $u_2 > u_2^{\lim}$ there is no longer a root in the neighbourhood of the previous iterate:
-the Newton--Raphson cycles around the local maximum of the residual without converging, or,
-with coarse increments, may take a huge step from the flat top of the residual and land by
-accident on the damaged branch. The optional backtracking line search
-(\texttt{parameters.line\_search}) removes this erratic behaviour: the Newton direction is kept
-but the step length $\alpha\in(0,1]$ is halved until $|R|$ decreases, so the iterates climb to the
-local maximum $R(u_1^{\lim};u_2) = -k_2(u_2-u_2^{\lim})$ and stall there in a few iterations,
-whatever the increment size. The solver checks convergence and, on failure (stall or
-\texttt{max\_iter}), stops the quasi-static calculation at that increment with a message: no restart on the damaged branch and no arc-length continuation are used, so the
-static curve ends at the limit point (figure~\ref{fig:iter}). This is the genuine behaviour of displacement control
-without any numerical device; the dynamic solution of \S\ref{sec:dyn} is the physical
-continuation. Away from the limit point, a few iterations suffice.
+the Newton--Raphson behaves erratically. With fine increments it cycles around the local
+maximum of the residual, whose value $R(u_1^{\lim};u_2) = -k_2(u_2-u_2^{\lim})$ is negative, and
+never converges. With coarse increments (the \texttt{inc} used here), an iterate may land very
+close to that maximum, where the tangent $k_t$ is almost zero: the Newton step $-R/k_t$ is then
+huge and may throw the iterate beyond the softening zone, onto the fully damaged branch where
+the residual is the straight line $k_2(u_1-u_2)$; one more iteration lands on $u_1 = u_2$ and the
+Newton--Raphson ``jumps'' by itself. The static curve then drops vertically from $F_{\max}$ to
+zero at that increment (figure~\ref{fig:iter}). Which of the two behaviours occurs depends on
+the increment size in an unpredictable way, and the jump, when it happens, occurs at the first
+increment beyond $u_2^{\lim}$ rather than at $u_2^{\lim}$ itself. No numerical device is used (no
+restart on the damaged branch, no arc-length): if the Newton--Raphson fails, the quasi-static
+calculation stops at that increment with a message. The dynamic solution of \S\ref{sec:dyn} is
+the physical continuation. Away from the limit point, a few iterations suffice.
 
 \section{Dynamic solution}
 \label{sec:dyn}
@@ -309,7 +311,7 @@ $0.66$ at the low point ($u_1\simeq5$~mm) and spring 1 ``healed'', which is non-
 \begin{figure}[h]\centering
   \includegraphics[width=.85\textwidth]{figures/force_displacement.pdf}
   \caption{Force--displacement response $F_2(u_2)$: analytical (complete branch with snap-back),
-  static (stops at the limit point) and dynamic (passes the limit point, then jumps and oscillates).}
+  static (jumps or stops at the limit point) and dynamic (passes the limit point, then jumps and oscillates).}
   \label{fig:fu}
 \end{figure}
 \begin{figure}[h]\centering
@@ -324,9 +326,11 @@ $0.66$ at the low point ($u_1\simeq5$~mm) and spring 1 ``healed'', which is non-
 \begin{figure}[h]\centering
   \includegraphics[width=\textwidth]{figures/nr_iterations.pdf}
   \caption{Number of Newton--Raphson iterations per increment (static, left) and per time step
-  (dynamic, right). In statics the count explodes to \texttt{max\_iter} at the limit point and
-  the calculation stops; in dynamics a few iterations suffice everywhere, including through
-  the snap. This is the practical justification of the dynamic approach.}
+  (dynamic, right). In statics the increment crossing the limit point is where the
+  Newton--Raphson either jumps by accident onto the damaged branch or fails (\texttt{max\_iter}
+  reached and the calculation stops), depending on the increment size; in dynamics a few
+  iterations suffice everywhere, including through the snap. This is the practical
+  justification of the dynamic approach.}
   \label{fig:iter}
 \end{figure}
 \begin{figure}[h]\centering
@@ -344,7 +348,7 @@ $0.66$ at the low point ($u_1\simeq5$~mm) and spring 1 ``healed'', which is non-
 \texttt{parameters.py} & physical and numerical parameters, derived quantities\\
 \texttt{model.py} & damage law with $\kappa$, static residual/tangent, Newton--Raphson\\
 \texttt{analytical\_solution.py} & branch \eqref{eq:ana}, peak, energy balance\\
-\texttt{static\_solution.py} & $u_2$ increments, Newton--Raphson, stop at the limit point, iterate history\\
+\texttt{static\_solution.py} & $u_2$ increments, Newton--Raphson, iterate history\\
 \texttt{dynamic\_solution.py} & predictor--corrector Newmark, ramp + hold, iterate history\\
 \texttt{comparison.py} & assembles the three solutions, figures (\texttt{--save} writes them to \texttt{figures/})\\
 \bottomrule
@@ -359,8 +363,7 @@ of the free oscillations; conservation of $d=1$ after the jump.
 \paragraph{Limitations and extensions.}
 Non-physical mass (regularisation parameter); no damping, hence perpetual oscillations after
 the jump (a damping $c\,\dot u_1$ or a dissipative Newmark $\gamma>\tfrac12$ would make them
-decay); spring 2 is assumed massless; the static calculation stops at the limit point (a
-restart of the Newton--Raphson on the fully damaged branch, or an arc-length method, would be
-needed to continue it quasi-statically).
+decay); spring 2 is assumed massless; the static calculation does not follow the equilibrium
+branch beyond the limit point (an arc-length method would be needed for that).
 
 \end{document}

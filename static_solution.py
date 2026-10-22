@@ -5,12 +5,15 @@ increments. At each increment we start from the previous solution (warm
 start) and solve res_static(u1, u2) = 0.
 
 Beyond the limit point of the snap-back there is no root of the residual
-near the previous solution: the NR cycles (plain NR) or stalls at the local
-maximum of the residual (NR with line search, parameters.line_search = True)
-and does not converge. No trick is used (no restart on the other branch, no
-arc-length): the quasi-static calculation simply stops at the first
-increment where the NR fails, with a message. The remaining entries of the
-output arrays are NaN.
+near the previous solution. With fine increments the NR cycles around the
+local maximum of the residual and does not converge; with coarse increments
+an iterate may land close to that maximum, where the tangent is almost
+zero, and the resulting huge Newton step may throw it beyond the softening
+zone, onto the fully damaged branch (u1 ~ u2) where the residual is a
+straight line: the NR then "jumps" by itself and converges. No trick is
+used (no restart on the other branch, no arc-length): if the NR fails, the
+quasi-static calculation simply stops at that increment, with a message,
+and the remaining entries of the output arrays are NaN.
 """
 
 import numpy as np
@@ -19,11 +22,10 @@ import model as mdl
 import parameters as prm
 
 
-def solve(inc=prm.inc, u2_f=None, line_search=prm.line_search):
+def solve(inc=prm.inc, u2_f=None):
     """
     Solve the static problem over `inc` increments from 0 to u2_f
-    (defaults from parameters.py). `line_search` switches the backtracking
-    line search of the Newton-Raphson on or off.
+    (defaults from parameters.py).
 
         Returns:
         u2_steps : (inc,) imposed displacements
@@ -46,18 +48,15 @@ def solve(inc=prm.inc, u2_f=None, line_search=prm.line_search):
     for n, u2n in enumerate(u2_steps):
         residual = lambda u, u2n=u2n, kappa=kappa: mdl.res_static(u, u2n, kappa)
         tangent = lambda u, kappa=kappa: mdl.tangent_static(u, kappa)
-        u1_n, ok, hist_x, hist_r = mdl.newton_raphson(residual, tangent, u1_prev,
-                                                      line_search=line_search)
+        u1_n, ok, hist_x, hist_r = mdl.newton_raphson(residual, tangent, u1_prev)
         if not ok:
             # Beyond the limit point there is no root near the previous iterate:
             # the NR cycles around the local maximum of the residual. The
             # quasi-static displacement-controlled calculation cannot go
             # further; it stops here.
             history.append((u2n, kappa, hist_x, hist_r))
-            why = ("line search stalled: no step length decreases |R|"
-                   if mdl.newton_raphson.last_stalled else "max_iter reached")
             print(f"[Static] step {n} (u2={u2n:.4g} mm): NR did not converge after "
-                  f"{len(hist_x) - 1} iterations ({why}), |R| = {abs(hist_r[-1]):.3g} N. "
+                  f"{len(hist_x) - 1} iterations, |R| = {abs(hist_r[-1]):.3g} N. "
                   f"No root near the previous solution (limit point reached): "
                   f"the quasi-static calculation stops here.")
             break

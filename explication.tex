@@ -341,7 +341,7 @@ figure~\ref{fig:fu}.
 \begin{figure}[h]\centering
   \includegraphics[width=.8\textwidth]{figures/force_displacement.pdf}
   \caption{Les trois solutions dans le plan $(u_2, F)$. Rouge : branche analytique complète avec
-  son rebroussement. Bleu : statique, s'arrête au point limite. Vert : dynamique, le noeud
+  son rebroussement. Bleu : statique, saute ou s'arrête au point limite selon la taille d'incrément. Vert : dynamique, le noeud
   oscille après la rupture et $F$ devient alternativement négative.}
   \label{fig:fu}
 \end{figure}
@@ -420,22 +420,24 @@ bout de $\imax$ itérations on déclare l'échec.
   \label{fig:resnr}
 \end{figure}
 
-\subsection{Ce que fait le code : s'arrêter au point limite}
-Le code ne triche pas : quand Newton n'a pas convergé, le calcul statique s'arrête à cet
-incrément et le signale.
+\subsection{Ce que fait le code : Newton livré à lui-même}
+Le code ne triche pas : aucun artifice n'est ajouté au Newton--Raphson. Ce qui se passe à
+l'incrément qui franchit le point limite dépend alors de la taille d'incrément, et de façon
+imprévisible.
 
-Un détail compte ici : avec des incréments grossiers, l'itéré qui tombe près du sommet du
-résidu voit une tangente presque nulle et fait un pas $-R/k_t$ gigantesque, qui peut par
-accident retomber dans la zone monotone et « converger » sur la branche rompue, ou partir vers
-$u_1<0$. Pour éviter ce hasard, le code propose une \textbf{recherche linéaire} (paramètre
-\texttt{line\_search}) : on garde la direction de Newton mais on réduit la longueur du pas,
-$\alpha\in(0,1]$ divisé par deux tant que $|R|$ ne diminue pas. Les itérés montent alors
-sagement jusqu'au sommet du résidu, en $u_1 = u_1^{\lim}$, où plus aucun pas ne fait décroître
-$|R|$ : Newton est déclaré bloqué après quelques itérations, avec un résidu final égal à
-$k_2(u_2-u_2^{\lim})$, quelle que soit la taille d'incrément. C'est la manière propre de montrer
-qu'il n'y a pas de racine. La courbe bleue de la figure~\ref{fig:fu}
-s'interrompt donc au point limite, et la figure~\ref{fig:iter} montre le nombre d'itérations
-par incrément : deux ou trois partout, puis $\imax$ d'un coup. C'est le comportement authentique d'un pilotage en
+Avec des incréments fins, le point de départ est tout près du sommet du résidu, les itérés
+cyclent autour de lui et le résidu ne descend jamais sous $|k_2(u_2-u_2^{\lim})|$ : Newton
+échoue après $\imax$ itérations et le calcul s'arrête en le signalant.
+
+Avec des incréments grossiers, comme le $\ninc$ retenu ici, il arrive qu'un itéré tombe à une
+distance infime du sommet, où la tangente $k_t$ est presque nulle. Le pas $-R/k_t$ est alors
+gigantesque et projette l'itéré bien au-delà de la zone adoucissante, là où le ressort 1 est
+mort et où le résidu est la droite $k_2(u_1-u_2)$ : une itération de plus et Newton tombe
+exactement sur $u_1 = u_2$. Il a « convergé », mais par un saut : la courbe bleue de la
+figure~\ref{fig:fu} chute verticalement de $F_{\max}$ à zéro à cet incrément, qui est le premier
+au-delà de $u_2^{\lim}$ et non le point limite lui-même. Un autre choix de $\ninc$ peut envoyer
+l'itéré vers $u_1<0$ ou le faire cycler : c'est l'avertissement de Chaboche sur les grands pas.
+La figure~\ref{fig:iter} montre le nombre d'itérations par incrément. C'est le comportement authentique d'un pilotage en
 déplacement quasi-statique : au-delà, il n'existe pas d'équilibre accessible en continu, et
 seule la dynamique (section~\ref{sec:dyn}) dit ce qui se passe réellement.
 
@@ -450,16 +452,18 @@ forme analytique avec \eqref{eq:ana}.
 \begin{figure}[h]\centering
   \includegraphics[width=\textwidth]{figures/nr_iterations.pdf}
   \caption{Nombre d'itérations de Newton par incrément (statique, gauche) et par pas de temps
-  (dynamique, droite). En statique le compteur explose à $\imax$ au point limite et le calcul
-  s'arrête ; en dynamique quelques itérations suffisent partout, y compris pendant le saut.
-  C'est la justification pratique du passage en dynamique, détaillée à la section~\ref{sec:dyn}.}
+  (dynamique, droite). En statique, l'incrément qui franchit le point limite est celui où Newton
+  saute par accident ou échoue, selon la taille d'incrément ; en dynamique quelques itérations
+  suffisent partout, y compris pendant le saut. C'est la justification pratique du passage en
+  dynamique, détaillée à la section~\ref{sec:dyn}.}
   \label{fig:iter}
 \end{figure}
 
 \begin{idee}
 L'échec du Newton--Raphson au point limite n'est pas un défaut de précision ni de pas : c'est un
 défaut de \emph{point de départ}. Augmenter $\ninc$ rapproche seulement le point de départ
-du sommet du résidu, cela ne crée pas de racine.
+du sommet du résidu, cela ne crée pas de racine ; et quand Newton « passe », c'est par un saut
+accidentel vers l'autre branche, pas en suivant l'équilibre.
 \end{idee}
 
 \section{Le calcul dynamique}
@@ -609,7 +613,7 @@ nombre de pas très grand, d'où un compromis sur $v_2$.
 Méthode & Ce qu'elle donne & Comment elle traite le point limite\\
 \midrule
 Analytique & toute la branche $F(u_2)$, y compris le rebroussement & en paramétrant par $u_1$, on n'a jamais à inverser $R$\\
-Statique NR & la réponse d'un essai piloté en déplacement idéal, jusqu'au point limite & Newton cycle ; le calcul s'arrête (relance ou longueur d'arc seraient nécessaires pour continuer)\\
+Statique NR & la réponse d'un essai piloté en déplacement idéal, jusqu'au point limite & Newton cycle et le calcul s'arrête, ou saute par accident sur la branche rompue\\
 Dynamique Newmark + NR & la réponse physique (saut en quelques pas, oscillations) & l'inertie $m_1/(\beta\Delta t^2)$ rend le résidu monotone si $\Delta t < \Delta t_{\max}$\\
 \bottomrule
 \end{tabular}

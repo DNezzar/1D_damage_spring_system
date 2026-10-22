@@ -48,12 +48,9 @@ u2_f = 0.6              # mm    final displacement (beyond the limit point ~0.47
 # ===========================================================================
 # 2. STATIC ALGORITHM (quasi-static Newton-Raphson)
 # ===========================================================================
-inc = 60              # number of u2 increments between 0 and u2_f
+inc = 50                # number of u2 increments between 0 and u2_f
 eps_nr = 1e-6           # N     absolute tolerance on the residual |R| (shared static/dynamic)
-max_iter = 30           # safeguard on the number of NR iterations per increment / time step
-line_search = True      # static NR with a backtracking line search on |R| (True) or plain NR (False)
-ls_c = 1e-4             # sufficient-decrease constant: alpha accepted if |R(u + alpha du)| <= (1 - ls_c alpha) |R(u)|
-ls_max_halvings = 20    # alpha halved at most this many times (alpha_min ~ 1e-6); beyond, the NR is declared stalled
+max_iter = 6           # safeguard on the number of NR iterations per increment / time step
 
 # ===========================================================================
 # 3. DYNAMIC ALGORITHM (implicit Newmark + Newton-Raphson)
@@ -105,8 +102,7 @@ def summary():
           f"(snap-back if < 0.446)")
     print(f"Mass at node 1     : m1 = {m1:.3g} t  ->  omega0 = {omega0:.4g} rad/s, "
           f"T0 = {T0*1e3:.4g} ms")
-    print(f"Static             : {inc} increments, |R| <= {eps_nr:g} N, {max_iter} it. max, "
-          f"line search {'on' if line_search else 'off'}")
+    print(f"Static             : {inc} increments, |R| <= {eps_nr:g} N, {max_iter} it. max")
     print(f"Dynamic            : Newmark beta={beta_nm}, gamma={gamma_nm}, dt = T0/{N_per_period} "
           f"= {dt*1e3:.4g} ms, m1*c1/(k1+k2) = {m1*c1/(k1+k2):.3g}")
     print(f"                     ramp v2 = {v2} mm/s -> {n_steps} steps ({T_ramp*1e3:.4g} ms), "

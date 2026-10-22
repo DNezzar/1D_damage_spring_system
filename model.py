@@ -14,7 +14,7 @@ Consistent units: N, mm, s  =>  mass in tonne (1 tonne = 1000 kg).
 
 import numpy as np
 
-from parameters import k1, k2, uc, m1, u2_f, eps_nr, max_iter, ls_c, ls_max_halvings
+from parameters import k1, k2, uc, m1, u2_f, eps_nr, max_iter
 
 
 # ---------------------------------------------------------------------------
@@ -60,41 +60,16 @@ def tangent_static(u1, kappa=0.0):
 # Generic Newton-Raphson: returns the solution, a convergence flag and the
 # iteration history (used to plot the iterates on the residual curves, in
 # statics as in dynamics).
-#
-# Optional backtracking line search: the Newton direction du = -R/k_t is
-# kept, but the step length alpha in (0, 1] is halved until the residual
-# decreases sufficiently, |R(x + alpha du)| <= (1 - ls_c alpha) |R(x)|.
-# This prevents the huge steps taken when k_t ~ 0 (near a limit point) and
-# the resulting cycling or accidental jumps. If no alpha gives a decrease
-# (the iterate sits at a local extremum of R that is not a root), the
-# iteration is declared stalled and stops before max_it.
 # ---------------------------------------------------------------------------
-def newton_raphson(residual, tangent, x0, tol=eps_nr, max_it=max_iter,
-                   line_search=False, c=ls_c, max_halvings=ls_max_halvings):
+def newton_raphson(residual, tangent, x0, tol=eps_nr, max_it=max_iter):
     x = x0
     hist_x = [x]
     hist_r = [residual(x)]
     it = 0
-    stalled = False
     while abs(hist_r[-1]) > tol and it < max_it:
-        dx = -hist_r[-1] / tangent(x)
-        alpha = 1.0
-        if line_search:
-            r0 = abs(hist_r[-1])
-            k = 0
-            while abs(residual(x + alpha * dx)) > (1.0 - c * alpha) * r0 and k < max_halvings:
-                alpha *= 0.5
-                k += 1
-            if k == max_halvings:
-                stalled = True
-                break
-        x = x + alpha * dx
+        x = x - hist_r[-1] / tangent(x)
         hist_x.append(x)
         hist_r.append(residual(x))
         it += 1
     converged = abs(hist_r[-1]) <= tol
-    newton_raphson.last_stalled = stalled
     return x, converged, np.array(hist_x), np.array(hist_r)
-
-
-newton_raphson.last_stalled = False
