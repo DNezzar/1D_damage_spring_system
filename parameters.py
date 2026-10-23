@@ -22,7 +22,7 @@ import numpy as np
 # --- Spring 1: concrete specimen (damageable) -------------------------------
 E1 = 30000.0            # MPa   Young's modulus of concrete
 A1 = 100.0 * 100.0      # mm^2  cross-section 100 x 100
-L1 = 100.0              # mm    length
+L1 = 500.0              # mm    length
 rho1 = 2.4e-9           # t/mm^3 density (2400 kg/m^3)
 f_t = 3.0               # MPa   tensile strength -> sets the parameter uc
                         #       (peak force F_max = f_t * A1)
@@ -34,7 +34,7 @@ L2 = 1000.0             # mm
 rho2 = 7.85e-9          # t/mm^3 (7850 kg/m^3)
 
 # --- Additional mass at node 1 (grips, fixture) ------------------------------
-m_grip = 2.5e-2         # t  (25 kg; 2.5e-3 t would be 2.5 kg)
+m_grip = 2.5e-3         # t  (25 kg; 2.5e-3 t would be 2.5 kg)
 
 # --- Loading: imposed displacement at node 2 ---------------------------------
 u2_f = 0.6              # mm    final displacement (beyond the limit point ~0.47 mm)
@@ -48,9 +48,9 @@ u2_f = 0.6              # mm    final displacement (beyond the limit point ~0.47
 # ===========================================================================
 # 2. STATIC ALGORITHM (quasi-static Newton-Raphson)
 # ===========================================================================
-inc = 50                # number of u2 increments between 0 and u2_f
+inc = 53                # number of u2 increments between 0 and u2_f
 eps_nr = 1e-6           # N     absolute tolerance on the residual |R| (shared static/dynamic)
-max_iter = 6           # safeguard on the number of NR iterations per increment / time step
+max_iter = 50           # safeguard on the number of NR iterations per increment / time step
 
 # ===========================================================================
 # 3. DYNAMIC ALGORITHM (implicit Newmark + Newton-Raphson)

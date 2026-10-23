@@ -74,17 +74,27 @@ def main(save=False):
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=False)
 
+    # The increment / time step with the most NR iterations (the snap) is
+    # always shown, in a thick red line with large markers.
+    i_worst_static = int(np.argmax([len(h[2]) for h in hist_static]))
+    i_worst_dyn = int(np.argmax([len(h[4]) for h in hist_dyn]))
+
     ax = axes[0]
     idx_static = np.linspace(0, len(hist_static) - 1, n_res_demo).astype(int)
     for color, i in zip(colors, idx_static):
         u2n, d_prev, hist_x, hist_r = hist_static[i]
         ax.plot(u1_sweep, mdl.res_static(u1_sweep, u2n, d_prev), color=color, lw=1.2, alpha=0.8)
         ax.plot(hist_x, hist_r, 'o', color=color, ms=5, mec='k', mew=0.4)
+    u2n, d_prev, hist_x, hist_r = hist_static[i_worst_static]
+    ax.plot(u1_sweep, mdl.res_static(u1_sweep, u2n, d_prev), color='red', lw=2.5,
+            label=f'increment {i_worst_static} (u2 = {u2n:.4g} mm): {len(hist_x) - 1} iterations')
+    ax.plot(hist_x, hist_r, 'o', color='red', ms=8, mec='k', mew=0.6)
     ax.axhline(0, color='k', lw=0.8)
     ax.set_xlabel('u1 [mm]')
     ax.set_ylabel('Static residual R(u1) [N]')
     ax.set_title('Static: residual(u1) per increment + NR iterates')
     ax.grid(True, alpha=0.3)
+    ax.legend(loc='lower right', fontsize=9)
 
     ax = axes[1]
     idx_dyn = np.linspace(0, len(hist_dyn) - 1, n_res_demo).astype(int)
@@ -93,11 +103,16 @@ def main(save=False):
         ax.plot(u1_sweep, res_dynamic(u1_sweep, u2_np1, u_tilde, c1, d_prev),
                 color=color, lw=1.2, alpha=0.8)
         ax.plot(hist_x, hist_r, 'o', color=color, ms=5, mec='k', mew=0.4)
+    u2_np1, u_tilde, c1, d_prev, hist_x, hist_r = hist_dyn[i_worst_dyn]
+    ax.plot(u1_sweep, res_dynamic(u1_sweep, u2_np1, u_tilde, c1, d_prev), color='red', lw=2.5,
+            label=f'time step {i_worst_dyn} (u2 = {u2_np1:.4g} mm): {len(hist_x) - 1} iterations')
+    ax.plot(hist_x, hist_r, 'o', color='red', ms=8, mec='k', mew=0.6)
     ax.axhline(0, color='k', lw=0.8)
     ax.set_xlabel('u1 [mm]')
     ax.set_ylabel('Dynamic residual R(u1) [N]')
     ax.set_title('Dynamic: residual(u1) per time step + NR iterates')
     ax.grid(True, alpha=0.3)
+    ax.legend(loc='lower right', fontsize=9)
 
     fig.suptitle("Newton-Raphson residual comparison: inertia (term m1*c1) "
                  "regularises the non-monotonic static residual")

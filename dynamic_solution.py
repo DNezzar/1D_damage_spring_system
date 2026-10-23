@@ -142,6 +142,12 @@ if __name__ == "__main__":
         plt.plot(u1_sweep, res_dynamic(u1_sweep, u2_np1, u_tilde, c1, d_prev),
                  color=color, lw=1.2, alpha=0.8)
         plt.plot(hist_x, hist_r, 'o', color=color, ms=5, mec='k', mew=0.4)
+    i_worst = int(np.argmax([len(h[4]) for h in history]))
+    u2_np1, u_tilde, c1, d_prev, hist_x, hist_r = history[i_worst]
+    plt.plot(u1_sweep, res_dynamic(u1_sweep, u2_np1, u_tilde, c1, d_prev), color='red', lw=2.5,
+             label=f'time step {i_worst} (u2 = {u2_np1:.4g} mm): {len(hist_x) - 1} iterations')
+    plt.plot(hist_x, hist_r, 'o', color='red', ms=8, mec='k', mew=0.6)
+    plt.legend(loc='lower right', fontsize=9)
     plt.axhline(0, color='k', lw=0.8)
     plt.xlabel('u1 [mm]')
     plt.ylabel('Dynamic residual R(u1) [N]')

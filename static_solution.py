@@ -98,6 +98,12 @@ if __name__ == "__main__":
         u2n, d_prev, hist_x, hist_r = history[i]
         plt.plot(u1_sweep, mdl.res_static(u1_sweep, u2n, d_prev), color=color, lw=1.2, alpha=0.8)
         plt.plot(hist_x, hist_r, 'o', color=color, ms=5, mec='k', mew=0.4)
+    i_worst = int(np.argmax([len(h[2]) for h in history]))
+    u2n, d_prev, hist_x, hist_r = history[i_worst]
+    plt.plot(u1_sweep, mdl.res_static(u1_sweep, u2n, d_prev), color='red', lw=2.5,
+             label=f'increment {i_worst} (u2 = {u2n:.4g} mm): {len(hist_x) - 1} iterations')
+    plt.plot(hist_x, hist_r, 'o', color='red', ms=8, mec='k', mew=0.6)
+    plt.legend(loc='lower right', fontsize=9)
     plt.axhline(0, color='k', lw=0.8)
     plt.xlabel('u1 [mm]')
     plt.ylabel('Static residual R(u1) [N]')
