@@ -34,7 +34,7 @@ L2 = 1000.0             # mm
 rho2 = 7.85e-9          # t/mm^3 (7850 kg/m^3)
 
 # --- Additional mass at node 1 (grips, fixture) ------------------------------
-m_grip = 2.5e-3         # t  (25 kg; 2.5e-3 t would be 2.5 kg)
+m_grip = 2.5e-2         # t  (25 kg; 2.5e-3 t would be 2.5 kg)
 
 # --- Loading: imposed displacement at node 2 ---------------------------------
 u2_f = 0.6              # mm    final displacement (beyond the limit point ~0.47 mm)
@@ -57,7 +57,7 @@ max_iter = 50           # safeguard on the number of NR iterations per static in
 # ===========================================================================
 beta_nm = 0.3           # Newmark beta   (0.25, 0.5 = average acceleration,
 gamma_nm = 0.55         # Newmark gamma   unconditionally stable, no numerical damping)
-max_iter_dyn = 20       # safeguard on the number of NR iterations per time step
+max_iter_dyn = 10       # safeguard on the number of NR iterations per time step
 N_per_period = 5        # time steps per natural period T0: dt = T0 / N_per_period.
                         # With beta = 1/4, the inertia/stiffness ratio in the tangent is
                         # m1*c1/(k1+k2) = N^2/pi^2: N = 5 -> 2.5 (regularises the
