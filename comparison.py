@@ -50,49 +50,20 @@ def main(save=False):
     plt.tight_layout()
 
     # -- Fig 2: damage of spring 1 ------------------------------------------
-    # Left: d versus u1. Right: the same with 1 - d on a log scale, which
-    # opens up the region d ~ 1 where the post-rupture oscillation lives.
-    # The dynamic solution is split into loading steps (trial damage reaches
-    # or exceeds the damage already attained: the point lies on the curve
-    # d(u1)) and unloading steps (u1 has moved back below the maximum
-    # reached: d is frozen by irreversibility and the point lies off the
-    # curve, on a horizontal line). After rupture the mass oscillates, so
-    # the post-rupture steps sweep u1 back and forth at constant d.
-    d_trial = mdl.damage(u1_dyn)
-    d_dyn = np.maximum.accumulate(d_trial)
-    # Loading step = u1 at or above the maximum reached so far. This kinematic
-    # test is used instead of comparing damages, because beyond u1 ~ 6 uc the
-    # trial damage equals 1 to machine precision and damages can no longer
-    # tell loading from unloading.
-    loading = u1_dyn >= np.maximum.accumulate(u1_dyn) - 1e-12
-    u1_plot = np.linspace(1e-4 * mdl.uc, max(np.nanmax(u1_static), u1_dyn.max()) * 1.1, 2000)
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-    for ax, ylog in zip(axes, (False, True)):
-        if ylog:
-            y_curve, y_sta = 1.0 - mdl.damage(u1_plot), 1.0 - mdl.damage(u1_static)
-            y_dyn = np.maximum(1.0 - d_dyn, 1e-10)
-        else:
-            y_curve, y_sta, y_dyn = mdl.damage(u1_plot), mdl.damage(u1_static), d_dyn
-        ax.plot(u1_plot, y_curve, 'k-', lw=1.5, label='trial damage, loading curve')
-        ax.plot(u1_dyn, y_dyn, '-', color='0.8', lw=0.6, label='dynamic path (time ordered)')
-        ax.plot(u1_static, y_sta, 'b.', ms=4, label='static')
-        ax.plot(u1_dyn[loading], y_dyn[loading], 'g.', ms=4, label='dynamic, loading: on the curve')
-        ax.plot(u1_dyn[~loading], y_dyn[~loading], '.', color='tab:orange', ms=4,
-                label='dynamic, unloading: d frozen, off the curve')
-        ax.set_xlabel('u1 [mm]')
-        ax.grid(True, alpha=0.3)
-        if ylog:
-            ax.set_yscale('log')
-            ax.set_ylim(1e-10, 2.0)
-            ax.set_ylabel('1 - d (log scale, floored at 1e-10 = numerically d = 1)')
-            ax.set_title('Same, 1 - d on a log scale: the post-rupture oscillation at constant d')
-            ax.annotate('after rupture the mass oscillates:\nu1 sweeps back and forth at d = 1',
-                        xy=(0.5 * u1_dyn.max(), 1e-10), xytext=(0.35 * u1_dyn.max(), 1e-5),
-                        arrowprops=dict(arrowstyle='->', color='tab:orange'), fontsize=9, color='tab:orange')
-        else:
-            ax.set_ylabel('damage d')
-            ax.set_title('Damage evolution of spring 1 (loading vs unloading)')
-            ax.legend(fontsize=8, loc='lower right')
+    # After rupture the mass oscillates and u1 moves back below the maximum
+    # reached; d is frozen by irreversibility, so the dynamic points sit on
+    # d = 1 off the trial-damage curve. This is the unloading along the
+    # secant, not an error.
+    plt.figure(figsize=(8, 5))
+    u1_plot = np.linspace(0.0, max(np.nanmax(u1_static), u1_dyn.max()) * 1.1, 500)
+    plt.plot(u1_plot, mdl.damage(u1_plot), 'k-', label='d(u1)')
+    plt.plot(u1_static, mdl.damage(u1_static), 'b.', ms=3, label='Static')
+    plt.plot(u1_dyn, np.maximum.accumulate(mdl.damage(u1_dyn)), 'g.', ms=3, label='Dynamic (irreversible)')
+    plt.xlabel('u1 [mm]')
+    plt.ylabel('Damage d')
+    plt.title('Damage evolution of spring 1')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
     plt.tight_layout()
 
     # -- Fig 3: NR residual comparison, static vs dynamic -------------------
