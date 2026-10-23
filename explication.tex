@@ -42,6 +42,17 @@ Les valeurs numériques correspondantes s'obtiennent avec \texttt{python paramet
 \tableofcontents
 \clearpage
 
+\section*{Comment lire cette note}
+Chaque section part d'une question physique, écrit l'équation qui y répond, puis explique
+\emph{chaque terme} de cette équation : d'où il vient, quelle est son unité, ce qu'il devient
+dans les cas limites. Les encadrés « À faire à la main » donnent les formules à évaluer avec
+vos paramètres ; les encadrés « L'idée à retenir » résument ce qu'il faut garder en tête.
+Le fil conducteur est le suivant : un ressort qui s'adoucit, monté en série avec un ressort
+élastique souple, produit un \emph{snap-back} ; le calcul statique bute dessus parce que
+l'équilibre cesse d'exister en continu ; le calcul dynamique passe parce que l'inertie
+rend le problème bien posé. La dernière section rassemble les différentes notions de
+stabilité qui se cachent derrière ces trois phrases.
+
 \section{Le système et les ordres de grandeur}
 
 \subsection{Le montage}
@@ -73,19 +84,39 @@ chaîne de deux ressorts :
         traction.
   \item Le \textbf{ressort 2} représente la barre d'acier de la chaîne de chargement : longueur
         $L_2$, section $A_2$, module $E_2$, masse volumique $\rho_2$. Il reste élastique.
-  \item Le \textbf{noeud 1} porte la masse concentrée
-        $m_1 = \tfrac12\rho_1A_1L_1 + \tfrac12\rho_2A_2L_2 + m_{\text{grip}}$
-        (demi-éprouvette, demi-barre, mors) ; c'est le seul degré de liberté inconnu.
+  \item Le \textbf{noeud 1} porte la masse concentrée $m_1$ ; c'est le seul degré de liberté
+        inconnu.
   \item Le \textbf{noeud 2} est piloté en déplacement : on impose $u_2(t)$ croissant de $0$ à $u_2^f$.
 \end{itemize}
-Unités : N, mm, s. Alors les contraintes sont en MPa et les masses en tonnes.
+Unités : N, mm, s. Alors les contraintes sont en MPa (1~MPa = 1~N/mm$^2$) et les masses en
+tonnes (une force en N divisée par une accélération en mm/s$^2$ donne des N\,s$^2$/mm, soit des
+tonnes).
+
+\paragraph{Les déplacements.} $u_0 = 0$ (encastrement), $u_1$ est le déplacement du noeud 1 vers la
+droite, $u_2$ celui du noeud 2. L'allongement du ressort 1 est $u_1 - u_0 = u_1$ ; l'allongement du
+ressort 2 est $u_2 - u_1$. Ces deux allongements sont les seules grandeurs cinématiques du
+problème : tout ce qui suit s'exprime avec elles.
+
+\paragraph{La masse concentrée.}
+\begin{equation}
+  m_1 = \tfrac12\rho_1A_1L_1 + \tfrac12\rho_2A_2L_2 + m_{\text{grip}} .
+\end{equation}
+Chaque barre a une masse $\rho AL$ répartie sur sa longueur. En la « concentrant » aux noeuds,
+on en met la moitié à chaque extrémité (c'est la matrice de masse diagonalisée, ou \emph{lumped},
+des éléments finis). Le noeud 1 reçoit donc une demi-éprouvette, une demi-barre, plus la masse
+des mors $m_{\text{grip}}$. Les demi-masses restantes sont sur les noeuds 0 et 2, dont le
+mouvement est imposé ; elles n'interviennent pas.
 
 \subsection{Les raideurs}
-Une barre élastique de longueur $L$, section $A$, module $E$ soumise à une force $F$ s'allonge de
-$\delta = FL/(EA)$ : c'est un ressort de raideur
+Une barre élastique de longueur $L$, section $A$, module $E$ soumise à une force $F$ porte la
+contrainte $\sigma = F/A$, se déforme de $\varepsilon = \sigma/E$ (loi de Hooke) et s'allonge de
+$\delta = \varepsilon L = FL/(EA)$. C'est un ressort de raideur
 \begin{equation}
-  k = \frac{EA}{L}.
+  k = \frac{F}{\delta} = \frac{EA}{L}\qquad[\text{N/mm}].
 \end{equation}
+Lecture terme par terme : $E$ dit combien le matériau résiste à la déformation, $A$ combien de
+matière travaille, $1/L$ traduit qu'une barre longue cumule plus d'allongement pour la même
+déformation. Une barre deux fois plus longue est deux fois plus souple.
 \begin{alamain}
 $k_1 = \dfrac{E_1A_1}{L_1}$, \qquad $k_2 = \dfrac{E_2A_2}{L_2}$, \qquad
 $\dfrac{k_2}{k_1} = \dfrac{E_2A_2}{E_1A_1}\cdot\dfrac{L_1}{L_2}$.
@@ -94,27 +125,71 @@ Le rapport $k_2/k_1$ est le produit d'un rapport de rigidités axiales $E_2A_2/E
 rapport de longueurs $L_1/L_2$. Avec une barre de chargement longue et mince devant
 l'éprouvette, ce rapport est petit : tout le snap-back vient de là.
 
+\subsection{Équilibre sans endommagement : le cas linéaire}
+Avant d'introduire l'endommagement, résolvons le problème avec deux ressorts élastiques, pour
+avoir une référence. L'effort dans chaque ressort est raideur fois allongement :
+\begin{equation}
+  N_1 = k_1u_1,\qquad N_2 = k_2(u_2-u_1).
+\end{equation}
+Le noeud 1 est tiré vers la gauche par le ressort 1 (qui veut se raccourcir) et vers la droite
+par le ressort 2 : à l'équilibre $N_1 = N_2$, soit
+\begin{equation}
+  k_1u_1 = k_2(u_2-u_1)\quad\Longrightarrow\quad u_1 = \frac{k_2}{k_1+k_2}\,u_2 .
+  \label{eq:lin}
+\end{equation}
+Le déplacement du noeud intermédiaire est une fraction du déplacement imposé, et cette fraction
+est la \emph{souplesse relative} du ressort 1 : si $k_1 \gg k_2$, $u_1 \ll u_2$ (le béton intact
+bouge à peine, presque tout l'allongement est dans la barre d'acier). La force transmise est
+\begin{equation}
+  F = N_2 = k_2(u_2-u_1) = \frac{k_1k_2}{k_1+k_2}\,u_2 = k_{\text{eq}}\,u_2,\qquad
+  \frac{1}{k_{\text{eq}}} = \frac1{k_1}+\frac1{k_2},
+\end{equation}
+la raideur équivalente de deux ressorts en série : les souplesses s'ajoutent. L'énergie
+élastique stockée est
+\begin{equation}
+  \Psi = \tfrac12k_1u_1^2 + \tfrac12k_2(u_2-u_1)^2
+  = \tfrac12\frac{F^2}{k_1} + \tfrac12\frac{F^2}{k_2},
+\end{equation}
+et se répartit donc, elle aussi, au prorata des souplesses : le ressort souple stocke le plus
+d'énergie. Retenons cela, c'est la graine du snap-back.
+
 \section{La loi d'endommagement du ressort 1}
 
 \subsection{Raideur sécante et variable d'endommagement}
-On note $d\in[0,1]$ l'endommagement : $d = 0$ matériau sain, $d = 1$ matériau rompu. La raideur
-effective du ressort 1 est la raideur \emph{sécante}
+On note $d\in[0,1]$ l'endommagement : $d = 0$ matériau sain, $d = 1$ matériau rompu.
+L'idée de la mécanique de l'endommagement (Kachanov, Lemaitre) est que les microfissures
+réduisent la section qui travaille réellement : si une fraction $d$ de la section est
+fissurée, seule la fraction $1-d$ porte l'effort, et la raideur apparente est
 \begin{equation}
   \kd = k_1(1-d),\qquad F_1 = \kd\,u_1 = k_1(1-d)\,u_1 .
 \end{equation}
+On l'appelle raideur \emph{sécante} parce que, sur la courbe $F_1(u_1)$, c'est la pente de la
+corde qui joint l'origine au point courant, par opposition à la raideur \emph{tangente},
+pente de la courbe elle-même. Les deux coïncident tant que $d = 0$.
+
 On choisit la loi
 \begin{equation}
   \hat d(u_1) = 1-\exp\!\left(-\frac{\langle u_1\rangle_+^2}{\uc^2}\right),\qquad
   d(t) = \max_{\tau\le t}\hat d\bigl(u_1(\tau)\bigr).
   \label{eq:loi}
 \end{equation}
-$\hat d$ est la valeur « d'essai » calculée à partir de l'allongement courant (en traction
-seulement, d'où la partie positive $\langle u_1\rangle_+$), et $d$ est la plus grande valeur
-atteinte jusqu'ici. C'est l'\textbf{irréversibilité}, portée par $d$ lui-même : si $u_1$ diminue
-(décharge), $\hat d(u_1)$ passe sous $d$, $d$ reste figé et le ressort décharge élastiquement avec la
-raideur $k_1(1-d)$. Tant que le chargement est monotone, $d = \hat d(u_1)$ et on écrit
-simplement $d(u_1)$. La figure~\ref{fig:law} montre $d(u_1)$, la raideur relative $1-d$ et la
-force $F_1$.
+Chaque élément de cette formule a un rôle :
+\begin{itemize}[nosep]
+  \item $\hat d(u_1)$ est la valeur « d'essai », celle que donnerait l'allongement courant si
+        l'histoire ne comptait pas ;
+  \item $\langle u_1\rangle_+ = \max(u_1,0)$ est la partie positive : seule la traction
+        endommage le béton, une compression laisse $\hat d$ à zéro ;
+  \item $\uc$ est l'échelle de la loi (section~\ref{sec:uc}) ;
+  \item $\exp(-x^2)$ est une fonction qui vaut 1 en $x = 0$, décroît lentement d'abord (pente
+        nulle à l'origine, donc pas d'endommagement aux petits allongements), puis vite, puis
+        tend vers 0 ; $1-\exp(-x^2)$ monte donc de 0 à 1 en forme de S ;
+  \item $\max_{\tau\le t}$ est l'\textbf{irréversibilité} : $d$ est la plus grande valeur
+        atteinte jusqu'ici. Si $u_1$ diminue (décharge), $\hat d(u_1)$ passe sous $d$, $d$ reste
+        figé et le ressort décharge élastiquement avec la raideur $k_1(1-d)$, le long de la
+        sécante. Une fissure ne se referme pas en se ressoudant.
+\end{itemize}
+Tant que le chargement est monotone, $d = \hat d(u_1)$ et on écrit simplement $d(u_1)$. La
+figure~\ref{fig:law} montre $d(u_1)$, la raideur relative $1-d$ et la force $F_1$.
 
 \begin{figure}[h]\centering
   \includegraphics[width=\textwidth]{figures/damage_law.pdf}
@@ -125,22 +200,35 @@ force $F_1$.
   \label{fig:law}
 \end{figure}
 
+\paragraph{Charge et décharge en pratique.} Dans le code, l'histoire est portée par $d$ lui-même :
+on calcule $\hat d(u_1)$, on le compare à $d_{\text{prec}}$, on garde le plus grand. En charge
+($\hat d \ge d_{\text{prec}}$) la dérivée de $\kd$ par rapport à $u_1$ vaut $-k_1\hat d'(u_1)$ ; en
+décharge elle est nulle. Cette distinction est ce qui rend la tangente différente de la
+sécante, et elle réapparaîtra dans la stabilité (section~\ref{sec:stab}).
+
 \subsection{La courbe force--allongement du ressort 1}
-En charge, avec $x = u_1/\uc$ :
+En charge, avec $x = u_1/\uc$ (allongement sans dimension) :
 \begin{equation}
   F_1(u_1) = k_1\,u_1\,e^{-x^2}.
   \label{eq:F1}
 \end{equation}
-Cette courbe monte, passe par un maximum, puis redescend vers zéro : c'est un comportement
-\emph{adoucissant}. Trois points caractéristiques se calculent à la main.
+Lecture : $k_1u_1$ est ce que donnerait le ressort intact ; $e^{-x^2} = 1-d$ est le facteur
+de réduction. Aux petits $u_1$, $e^{-x^2}\simeq1$ et la courbe suit la droite $k_1u_1$ ; aux
+grands $u_1$, l'exponentielle l'emporte sur le facteur linéaire et la force tend vers zéro.
+Entre les deux il y a un maximum : c'est un comportement \emph{adoucissant}. Trois points
+caractéristiques se calculent à la main.
 
-\paragraph{Le pic.} On dérive \eqref{eq:F1} (produit $u_1\times e^{-x^2}$, avec $\dd x/\dd u_1 = 1/\uc$) :
+\paragraph{Le pic.} On dérive \eqref{eq:F1} comme un produit $u_1\times e^{-x^2}$, avec
+$\dd x/\dd u_1 = 1/\uc$ et $\dd(e^{-x^2})/\dd x = -2xe^{-x^2}$ :
 \begin{equation}
-  \frac{\dd F_1}{\dd u_1} = k_1e^{-x^2} + k_1u_1\Bigl(-\frac{2u_1}{\uc^2}\Bigr)e^{-x^2}
+  \frac{\dd F_1}{\dd u_1} = \underbrace{k_1e^{-x^2}}_{\text{raideur sécante}}
+  + \underbrace{k_1u_1\Bigl(-\frac{2u_1}{\uc^2}\Bigr)e^{-x^2}}_{\text{perte de raideur}\ u_1\,\dd\kd/\dd u_1}
   = k_1e^{-x^2}\bigl(1-2x^2\bigr).
   \label{eq:dF1}
 \end{equation}
-Elle s'annule pour $x = 1/\sqrt2$, soit
+Le premier terme est positif : à raideur fixée, allonger augmente la force. Le second est
+négatif : allonger endommage, donc réduit la raideur, donc réduit la force. La pente est la
+somme des deux ; elle s'annule quand ils se compensent, $1 = 2x^2$, soit
 \begin{equation}
   u_1^{\text{pic}} = \frac{\uc}{\sqrt2},\qquad
   F_{\max} = k_1\frac{\uc}{\sqrt2}e^{-1/2} = \frac{k_1\uc}{\sqrt{2e}},\qquad
@@ -151,33 +239,43 @@ de l'endommagement, c'est le moment où la perte de raideur l'emporte sur l'augm
 d'allongement. (Les constantes comme $1/\sqrt2$ ou $1-e^{-1/2}$ ne dépendent que de la forme de
 la loi, pas des paramètres.)
 
-\paragraph{La pente descendante la plus raide.} Elle joue un rôle central pour le snap-back. On
-dérive une seconde fois :
+\paragraph{La pente descendante la plus raide.} Au-delà du pic la pente est négative ; elle
+devient de plus en plus négative, puis remonte vers zéro quand la force s'éteint. Son minimum
+est au point d'inflexion de $F_1$, où la dérivée seconde s'annule. On dérive \eqref{eq:dF1},
+encore comme un produit $e^{-x^2}\times(1-2x^2)$ :
 \begin{equation}
-  \frac{\dd^2F_1}{\dd u_1^2} = \frac{k_1}{\uc}e^{-x^2}\bigl[-2x(1-2x^2) - 4x\bigr]
+  \frac{\dd^2F_1}{\dd u_1^2} = \frac{k_1}{\uc}\Bigl[-2xe^{-x^2}(1-2x^2) + e^{-x^2}(-4x)\Bigr]
   = \frac{k_1}{\uc}e^{-x^2}\,2x\bigl(2x^2-3\bigr),
 \end{equation}
-nulle pour $x^2 = 3/2$. En ce point d'inflexion la pente vaut
+nulle pour $x^2 = 3/2$. En ce point la pente vaut
 \begin{equation}
   \left.\frac{\dd F_1}{\dd u_1}\right|_{x=\sqrt{3/2}} = k_1e^{-3/2}(1-3) = -2e^{-3/2}\,k_1 \simeq -0{,}45\,k_1 .
   \label{eq:pentemax}
 \end{equation}
 \begin{idee}
 Le ressort endommageable ne peut jamais « décharger » plus vite que $2e^{-3/2}k_1$ par unité
-d'allongement. C'est cette raideur qu'il faut comparer à $k_2$.
+d'allongement. C'est cette raideur négative maximale qu'il faut comparer à $k_2$ : c'est
+elle, et non $k_1$, qui décide du snap-back.
 \end{idee}
 
-\paragraph{L'énergie dissipée totale.} Le travail pour rompre complètement le ressort est l'aire
-sous la courbe :
+\paragraph{L'énergie dissipée totale.} Le travail fourni pour allonger le ressort de 0 à
+l'infini est l'aire sous la courbe :
 \begin{equation}
   \int_0^\infty k_1u\,e^{-u^2/\uc^2}\,\dd u = k_1\Bigl[-\frac{\uc^2}{2}e^{-u^2/\uc^2}\Bigr]_0^\infty
   = \frac{k_1\uc^2}{2}.
 \end{equation}
-Rapportée à la section, c'est l'énergie de rupture $G_f = k_1\uc^2/(2A_1)$.
+(On reconnaît la dérivée de $-\tfrac{\uc^2}{2}e^{-u^2/\uc^2}$, qui est $u\,e^{-u^2/\uc^2}$.)
+Quand $d\to1$, plus aucune énergie élastique n'est stockée : tout ce travail a été dissipé par
+l'endommagement. Rapporté à la section, c'est l'énergie de rupture
+$G_f = k_1\uc^2/(2A_1)$, l'énergie qu'il faut fournir par unité de surface fissurée.
 
 \subsection{Calibration de $\uc$ sur la résistance en traction}
-On veut que le pic de force corresponde à la résistance en traction du béton, $F_{\max} = f_tA_1$ :
+\label{sec:uc}
+$\uc$ n'est pas une grandeur mesurable directement. On la fixe en imposant que le pic de force
+corresponde à la résistance en traction du béton, $F_{\max} = f_tA_1$ :
 \begin{equation}
+  \frac{k_1\uc}{\sqrt{2e}} = f_tA_1
+  \quad\Longrightarrow\quad
   \uc = \frac{\sqrt{2e}\,f_tA_1}{k_1} = \frac{\sqrt{2e}\,f_tL_1}{E_1}.
 \end{equation}
 \begin{alamain}
@@ -186,70 +284,224 @@ $\varepsilon^{\text{pic}} = \sqrt e\,f_t/E_1$ (à comparer à la déformation au
 $F_{\max} = f_tA_1$, \qquad
 $G_f = \dfrac{k_1\uc^2}{2A_1} = \dfrac{E_1}{2L_1}\cdot\dfrac{2e\,f_t^2L_1^2}{E_1^2} = \dfrac{e\,f_t^2L_1}{E_1}$.
 \end{alamain}
-Remarque utile : à $f_t$ et $G_f$ donnés, la longueur $L_1$ sur laquelle on « étale »
-l'endommagement n'est pas libre, $L_1 = G_fE_1/(e f_t^2)$. Il faut vérifier que la valeur de
-$G_f$ induite par le $L_1$ choisi reste dans la plage du matériau. Si l'on découpait l'éprouvette
-en plusieurs ressorts, un seul s'endommagerait et il faudrait réduire $\uc$ avec sa longueur
-pour conserver $G_f$ (c'est la « bande de fissuration » de Bažant et de Borst).
+Remarque importante : $G_f$ est proportionnelle à $L_1$. À $f_t$ et $G_f$ donnés, la longueur $L_1$
+sur laquelle on « étale » l'endommagement n'est pas libre, $L_1 = G_fE_1/(e f_t^2)$. Il faut
+vérifier que la valeur de $G_f$ induite par le $L_1$ choisi reste dans la plage du matériau. Si
+l'on découpait l'éprouvette en plusieurs ressorts, un seul s'endommagerait et il faudrait réduire
+$\uc$ avec sa longueur pour conserver $G_f$ (c'est la « bande de fissuration » de Bažant et de
+Borst). Autrement dit : $\uc$ est un paramètre de \emph{structure} ($\uc = \varepsilon_c L_1$), le
+paramètre matériau est $\varepsilon_c$ ou, mieux, $G_f$.
+
+\subsection{Le ressort endommageable et la zone cohésive : ce qui est identique, ce qui diffère}
+\label{sec:czm}
+
+\paragraph{L'identification.} Un modèle de zone cohésive (CZM) relie une traction $T$
+(force par unité de surface) à un saut de déplacement $[u]$ à travers une surface d'épaisseur
+nulle. Dans sa forme \emph{intrinsèque} (Acary et Monerie, équations (3)-(4)), il s'écrit
+$T = C_N\,\beta\,[u]$ avec $C_N$ la raideur initiale de l'interface et $\beta\in[0,1]$ une variable
+d'endommagement surfacique (1 intact, 0 rompu), irréversible. Divisons notre loi par la
+section $A_1$ :
+\begin{equation}
+  T = \frac{F_1}{A_1} = \frac{E_1}{L_1}\,(1-d)\,u_1
+  \quad\Longleftrightarrow\quad
+  C_N = \frac{E_1}{L_1},\qquad \beta = 1-d,\qquad [u] = u_1,\qquad
+  \beta = \exp\!\Bigl(-\frac{[u]^2}{\delta^2}\Bigr),\ \delta = \uc .
+\end{equation}
+Terme par terme : la traction cohésive est notre contrainte ; la raideur d'interface est le
+module divisé par la longueur ; le saut est l'allongement ; l'endommagement surfacique est le
+complément de $d$ ; la loi est la même fonction exponentielle avec $\uc$ pour échelle. Et le
+ressort 2 est exactement la barre élastique $E/L$ de leur figure 6. Le passage s'appelle chez
+Chaboche et Feyel (§2.2) « de l'interphase à l'interface » : une couche d'épaisseur $h$ qui
+s'endommage uniformément, $\varepsilon = [u]/h$, donne une interface de raideur $E/h$ ; notre
+$L_1$ joue le rôle de $h$. Chez de Borst c'est la version \emph{smeared}, $G_f = w\,g_f$ avec la
+largeur de bande $w = L_1$.
+
+\paragraph{Conséquence immédiate.} Tout ce que dit Acary et Monerie du problème « barre
+élastique + zone cohésive piloté en déplacement » s'applique à notre ressort sans
+adaptation : le théorème d'unicité (section~\ref{sec:stab}), le saut de solution, la
+relaxation dynamique, le rôle de la pente adoucissante maximale.
+
+\paragraph{Ce qui diffère : le sens du saut.} Dans une vraie zone cohésive, $[u]$ est une
+\emph{discontinuité} de déplacement : la matière de part et d'autre reste élastique, et le
+déplacement total est la somme de l'allongement élastique du volume et de l'ouverture $[u]$.
+Chez nous, $u_1$ est l'allongement \emph{total} de l'éprouvette, qui mélange la déformation
+élastique du béton encore intact et l'ouverture de la fissure. Cela a trois conséquences.
+\begin{enumerate}[nosep]
+  \item \emph{La raideur initiale a un sens physique.} Dans une CZM, $C_N$ est un paramètre de
+        pénalité qu'on voudrait infini pour que l'interface soit « invisible » avant
+        l'endommagement ; Acary et Monerie montrent qu'il faut $C_NL_{\text{mesh}}/E_m \ge 21$ pour
+        ne pas altérer la raideur globale, et que cette borne entre en conflit avec la
+        résolution de la longueur cohésive. Chez nous $C_N = E_1/L_1$ est la raideur de
+        l'éprouvette elle-même : elle n'est pas parasite, et la question de son calibrage ne se
+        pose pas.
+  \item \emph{La loi est plus raide en descente qu'une CZM équivalente.} Construisons la vraie
+        zone cohésive qui correspond à notre ressort : un ressort élastique $k_1$ (béton intact)
+        en série avec une interface d'ouverture $w$ et de traction $T(w)$ sans raideur initiale
+        (modèle \emph{extrinsèque}, qui ne s'ouvre qu'à $\sigma = f_t$). On impose les mêmes
+        $f_t$ et $G_f$. L'allongement total est $u_1 = F_1L_1/(E_1A_1) + w$ : à force égale,
+        $u_1$ dépasse $w$ de l'allongement élastique. Sur la descente, quand la force baisse de
+        $\dd F_1 < 0$, l'allongement élastique \emph{diminue} de $\dd F_1/k_1$ : notre $u_1$
+        avance moins vite que $w$, donc la pente $\dd F_1/\dd u_1$ est plus raide que
+        $\dd T/\dd w\times A_1$. Précisément, $\dd u_1 = \dd w + \dd F_1/k_1$, d'où
+        \begin{equation}
+          \frac{\dd F_1}{\dd u_1} = \frac{\dd F_1/\dd w}{1 + \dfrac{1}{k_1}\dfrac{\dd F_1}{\dd w}} ,
+        \end{equation}
+        et pour une pente cohésive négative $\dd F_1/\dd w = -s$ avec $s < k_1$, la pente
+        apparente est $-s/(1-s/k_1)$, plus négative que $-s$. C'est le point 4 d'Acary et
+        Monerie (figure 7) : à $G_f$, $f_t$ et ouverture critique égaux, les modèles
+        intrinsèques sont moins stables que les extrinsèques, parce que la décharge élastique
+        du volume s'ajoute à l'adoucissement de l'interface. Notre ressort est donc \emph{plus}
+        sujet au snap-back qu'une zone cohésive extrinsèque de mêmes paramètres.
+  \item \emph{La refermeture.} Une zone cohésive rompue retrouve un contact unilatéral quand
+        $[u]$ revient à zéro (leur formulation couple la CZM au contact de Signorini et au
+        frottement). Chez nous, le ressort rompu a une raideur nulle dans les deux sens : si
+        $u_1$ passait sous zéro, rien ne s'y opposerait. La partie positive dans $\hat d$ évite
+        seulement que la compression endommage ; elle ne restaure pas la raideur. Sans effet
+        ici (l'oscillation ramène $u_1$ au plus à $u_1^{\lim}$), mais c'est une différence de
+        modèle.
+\end{enumerate}
+
+\paragraph{Ce qui diffère : la localisation.} Une zone cohésive est localisée par
+construction, c'est une surface : si on raffine le maillage du volume, l'énergie dissipée
+reste $G_f\times$surface, indépendante du maillage. Notre ressort est localisé parce qu'on a
+choisi \emph{un seul} élément de longueur $L_1$. Si l'on maillait l'éprouvette en $n$
+ressorts de longueur $h = L_1/n$ avec la même loi, l'endommagement se concentrerait dans un
+seul (le premier à atteindre le pic, par arrondi), les autres déchargeraient élastiquement,
+et l'énergie dissipée vaudrait $A_1h\int\sigma\,\dd\varepsilon \to 0$ quand $h\to0$. Pour retrouver
+l'objectivité il faudrait faire dépendre $\uc$ de $h$ ($\uc^2 = 2G_fh/E_1$), ce qui revient à
+reconstruire une zone cohésive à la main. C'est l'argument central d'Acary et Monerie en
+faveur des CZM pour la rupture : l'énergie est portée par une surface, pas par un volume.
+
+\begin{center}
+\begin{tabular}{@{}p{3.6cm}p{5.2cm}p{5.2cm}@{}}
+\toprule
+ & Notre ressort endommageable & Zone cohésive intrinsèque\\
+\midrule
+Variable cinématique & $u_1$ = allongement total (élastique + fissure) & $[u]$ = ouverture seule\\
+Raideur initiale & $E_1/L_1$, physique (l'éprouvette) & $C_N$, paramètre de pénalité à calibrer\\
+Pente adoucissante & plus raide (décharge élastique incluse) & moins raide à $f_t$, $G_f$ égaux\\
+Localisation & par choix d'un seul élément & par construction (surface)\\
+Objectivité au maillage & non, sauf $\uc \propto \sqrt h$ & oui\\
+Refermeture & aucune raideur retrouvée & contact unilatéral\\
+Critère de saut & $k_2 < 2e^{-3/2}k_1$ & $E/L < \sup|\xi'|$ (théorème 1)\\
+Relaxation dynamique & $m_1/(\beta\Delta t^2) + k_t > 0$ & $M/(Sh^2) + E/L > \sup|\xi'|$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{idee}
+Notre modèle est la zone cohésive intrinsèque la plus simple possible, de raideur initiale
+$E_1/L_1$, en série avec une barre élastique. Tout le raisonnement sur l'unicité, le saut et
+la relaxation dynamique est le même. La seule chose à garder en tête : $u_1$ contient
+l'allongement élastique du béton intact, ce qui rend notre loi un peu plus instable qu'une
+zone cohésive extrinsèque de mêmes $f_t$ et $G_f$.
+\end{idee}
 
 \section{L'équilibre statique et la construction graphique}
 
-\subsection{L'équation d'équilibre}
-Le noeud 1 est tiré vers la gauche par le ressort 1 avec la force $F_1 = \kd u_1$ et vers la
-droite par le ressort 2 avec la force $F_2 = k_2(u_2-u_1)$. À l'équilibre (sans masse, ou à
-vitesse nulle) :
+\subsection{Isoler le noeud 1 : forces intérieures et extérieures}
+Le point de départ de toute équation d'équilibre est de choisir un \emph{système}, de tracer
+sa frontière, et de lister ce qui agit dessus depuis l'extérieur.
+
+\paragraph{Système = la masse du noeud 1.} Deux objets la touchent. Le ressort 1, allongé de
+$u_1$, tire ses extrémités l'une vers l'autre : sur le noeud 1 il exerce $-\kd u_1$ (vers la
+gauche). Le ressort 2, allongé de $u_2-u_1$, tire de même : sur le noeud 1 il exerce
+$+k_2(u_2-u_1)$ (vers la droite). Le principe fondamental donne
+\begin{equation}
+  m_1\ddot u_1 = -\kd u_1 + k_2(u_2-u_1).
+  \label{eq:pfd}
+\end{equation}
+Avec ce choix, les deux forces de ressort sont extérieures à la masse, et c'est le point de vue
+le plus simple.
+
+\paragraph{Système = la structure entière.} C'est le vocabulaire des éléments finis. Les forces
+que les ressorts déformés exercent sur les noeuds sont dites \emph{intérieures} ; on les note
+$f^{\text{int}}$ avec le signe de ce que le noeud devrait recevoir de l'extérieur pour rester en
+équilibre, donc l'opposé de ce qu'on vient d'écrire : $f^{\text{int}}_1 = \kd u_1 - k_2(u_2-u_1)$.
+Les forces \emph{extérieures} sont ce que le monde applique aux noeuds : rien sur le noeud 1,
+la force $F_2$ de la machine sur le noeud 2. L'équation du mouvement s'écrit
+$m\ddot u + f^{\text{int}} = f^{\text{ext}}$, ce qui pour le noeud 1 redonne \eqref{eq:pfd}.
+
+\paragraph{Le déplacement imposé comme force extérieure.} Développons
+$f^{\text{int}}_1 = (\kd+k_2)u_1 - k_2u_2$. Le terme $k_2u_2$ ne contient pas l'inconnue : $u_2$
+est connu à chaque instant. On le passe à droite :
+\begin{equation}
+  m_1\ddot u_1 + \underbrace{(\kd+k_2)\,u_1}_{f^{\text{int}}(u_1)} = \underbrace{k_2\,u_2(t)}_{f^{\text{ext}}(t)} .
+\end{equation}
+Ici « extérieur » veut dire « connu, indépendant de l'inconnue ». Physiquement : imposer $u_2$
+à l'extrémité du ressort 2 revient à tirer le noeud 1 avec une force $k_2u_2$ à travers un
+ressort $k_2$ attaché au noeud 1. C'est le traitement standard d'un déplacement imposé : dans
+le système à deux noeuds
+\begin{equation}
+  \begin{bmatrix} \kd+k_2 & -k_2\\ -k_2 & k_2\end{bmatrix}
+  \begin{Bmatrix}u_1\\u_2\end{Bmatrix} = \begin{Bmatrix}0\\F_2\end{Bmatrix},
+\end{equation}
+la première ligne est l'équilibre du noeud 1 avec $k_2u_2$ passé au second membre, et la seconde
+donne la réaction $F_2 = k_2(u_2-u_1)$, calculée \emph{après} avoir trouvé $u_1$. C'est cette
+réaction qu'on trace en ordonnée des courbes force--déplacement.
+
+\subsection{L'équation d'équilibre et le résidu}
+En statique, le terme d'inertie disparaît (masse nulle, ou vitesse constante nulle) :
 \begin{equation}
   \boxed{\;\kd(u_1)\,u_1 = k_2\,(u_2-u_1)\;}
   \qquad\Longleftrightarrow\qquad
   R(u_1;u_2) \equiv \bigl(\kd(u_1)+k_2\bigr)u_1 - k_2u_2 = 0 .
   \label{eq:eq}
 \end{equation}
-La force mesurée par la machine est $F = F_2 = k_2(u_2-u_1)$, égale à $F_1$ à l'équilibre.
+$R$ est le \emph{résidu} : la force non équilibrée qui resterait sur le noeud 1 si on le
+plaçait en $u_1$ à $u_2$ donné. $R > 0$ signifie que le ressort 1 tire plus fort que le
+ressort 2 (le noeud voudrait reculer), $R < 0$ l'inverse. L'équilibre est la racine de $R$.
+Comme $\kd$ dépend de $u_1$, cette équation est \emph{non linéaire} en $u_1$ : il n'y a plus de
+formule fermée comme \eqref{eq:lin}, et il faut la résoudre graphiquement ou par itérations.
+Elle reste en revanche \emph{linéaire en $u_2$}, ce qui sera la clé de la solution analytique.
 
 \subsection{Lecture graphique}
 Dans le plan $(u_1, F)$ :
 \begin{itemize}[nosep]
   \item le membre de gauche de \eqref{eq:eq} est la \textbf{courbe} $F_1(u_1)$ du ressort 1 ;
   \item le membre de droite est une \textbf{droite} de pente $-k_2$ qui coupe l'axe des abscisses en
-        $u_1 = u_2$ et l'axe des ordonnées en $k_2u_2$.
+        $u_1 = u_2$ (ressort 2 détendu) et l'axe des ordonnées en $k_2u_2$ (noeud 1 bloqué).
 \end{itemize}
-Les équilibres sont les intersections. Quand on augmente $u_2$, la droite se translate vers la
-droite sans changer de pente (figure~\ref{fig:constr}, gauche).
+Les équilibres sont les intersections, et le résidu est l'écart vertical entre la courbe et la
+droite. Quand on augmente $u_2$, la droite se translate vers la droite sans changer de pente
+(figure~\ref{fig:constr}, gauche).
 
 \begin{figure}[h]\centering
   \includegraphics[width=\textwidth]{figures/explication_construction.pdf}
   \caption{Construction graphique de l'équilibre. Gauche : $k_2 \ll k_1$, la droite est presque
   plate ; dès que $u_2$ dépasse $u_2^{\lim}$ elle passe au-dessus du pic et il n'y a plus
   d'intersection sur la branche montante : saut. Droite : avec un ressort 2 raide
-  ($k_2' > 2e^{-3/2}k_1$), la droite est plus pentue que la descente la plus raide de $F_1$ ; une
+  ($k_2 > 2e^{-3/2}k_1$), la droite est plus pentue que la descente la plus raide de $F_1$ ; une
   seule intersection quel que soit $u_2$, pas de saut.}
   \label{fig:constr}
 \end{figure}
 
 Trois situations, selon $u_2$, dans le cas de gauche :
 \begin{enumerate}[nosep]
-  \item $u_2 < u_2^{\lim}$ : une intersection sur la branche montante de $F_1$ (stable)
-        et une sur la branche descendante loin à droite (que l'on n'atteint pas en chargeant depuis
-        zéro). Le système suit la première.
+  \item $u_2 < u_2^{\lim}$ : une intersection sur la branche montante de $F_1$ (stable, on verra
+        pourquoi) et une sur la branche descendante loin à droite (que l'on n'atteint pas en
+        chargeant depuis zéro). Le système suit la première.
   \item $u_2 = u_2^{\lim}$ : la droite est \emph{tangente} à $F_1$ juste après le pic.
-        C'est le \textbf{point limite}.
+        C'est le \textbf{point limite}. Les deux intersections ont fusionné.
   \item $u_2 > u_2^{\lim}$ : plus aucune intersection à gauche. Le seul équilibre
         est très loin à droite, sur la branche $F_1\simeq0$, c'est-à-dire $u_1 \simeq u_2$ : le
         ressort 1 est rompu et le ressort 2 détendu. Le système doit \textbf{sauter} jusque-là.
 \end{enumerate}
 
-\subsection{Pourquoi la tangence ?}
+\subsection{Pourquoi la tangence ? La raideur tangente du système}
 Sur la branche descendante de $F_1$, l'intersection avec la droite persiste tant que la courbe
 descend \emph{moins vite} que la droite, c'est-à-dire tant que $\dd F_1/\dd u_1 > -k_2$. Le point
-limite est atteint quand
+limite est atteint quand les deux pentes sont égales :
 \begin{equation}
   \frac{\dd F_1}{\dd u_1} = -k_2
   \quad\Longleftrightarrow\quad
-  k_t(u_1) \equiv \frac{\dd F_1}{\dd u_1} + k_2 = k_1e^{-x^2}(1-2x^2) + k_2 = 0 .
+  k_t(u_1) \equiv \frac{\partial R}{\partial u_1} = \frac{\dd F_1}{\dd u_1} + k_2 = k_1e^{-x^2}(1-2x^2) + k_2 = 0 .
   \label{eq:kt}
 \end{equation}
-La quantité $k_t$ est la \textbf{raideur tangente du système} : c'est la dérivée du résidu
-$R$ par rapport à $u_1$, et c'est elle qui apparaîtra dans le Newton--Raphson.
+La quantité $k_t$ est la \textbf{raideur tangente du système} : la dérivée du résidu par rapport
+à l'inconnue. Elle additionne la pente du ressort 1 (positive avant le pic, négative après) et
+la raideur $k_2$ (toujours positive). Elle sera la tangente du Newton--Raphson, et son signe
+décidera de la stabilité de chaque équilibre.
 
 \section{Snap-back ou pas : le critère}
 
@@ -260,9 +512,12 @@ $F_1$, donc si sa pente $-k_2$ est moins raide que la pente minimale \eqref{eq:p
   \boxed{\;\text{snap-back}\iff k_2 < 2e^{-3/2}\,k_1\;}
   \label{eq:crit}
 \end{equation}
-Si au contraire $k_2 > 2e^{-3/2}k_1$, la droite coupe toujours $F_1$ en un seul point : la réponse
-$F(u_2)$ est adoucissante mais \emph{régulière}, et un pilotage en déplacement la suit sans
-difficulté (figure~\ref{fig:constr}, droite).
+Si au contraire $k_2 > 2e^{-3/2}k_1$, alors $k_t > 0$ partout : la droite coupe toujours $F_1$ en
+un seul point, la réponse $F(u_2)$ est adoucissante mais \emph{régulière}, et un pilotage en
+déplacement la suit sans difficulté (figure~\ref{fig:constr}, droite). C'est exactement la
+condition d'unicité du théorème 1 d'Acary et Monerie : en dimension un, la solution du problème
+quasi-statique est unique si $\sup|\xi'|/|E/L| < 1$, c'est-à-dire si la pente maximale de la loi
+cohésive est inférieure à la raideur de la structure élastique en série.
 
 \subsection{Le critère en longueurs et sections}
 En remplaçant les raideurs par $EA/L$ :
@@ -314,27 +569,34 @@ Le point limite en déplacement ($k_t = 0$) est d'autant plus proche du pic en f
 
 \subsection{Paramétrer par $u_1$ au lieu de $u_2$}
 Résoudre \eqref{eq:eq} en $u_1$ à $u_2$ donné est impossible en forme fermée (équation
-transcendante). Mais \eqref{eq:eq} est \emph{linéaire en $u_2$} : on l'inverse donc dans l'autre
-sens.
+transcendante : l'inconnue est à la fois dans un facteur linéaire et dans une exponentielle).
+Mais \eqref{eq:eq} est \emph{linéaire en $u_2$} : on l'inverse donc dans l'autre sens, en
+choisissant $u_1$ comme paramètre et en calculant le $u_2$ qui lui correspond :
 \begin{equation}
-  \boxed{\;u_2(u_1) = u_1\Bigl(1+\frac{k_1}{k_2}e^{-x^2}\Bigr),\qquad
+  \boxed{\;u_2(u_1) = u_1 + \frac{F_1(u_1)}{k_2} = u_1\Bigl(1+\frac{k_1}{k_2}e^{-x^2}\Bigr),\qquad
   F(u_1) = k_1u_1e^{-x^2}\;}
   \label{eq:ana}
 \end{equation}
-En faisant croître $u_1$ de 0 à l'infini on décrit toute la courbe $F(u_2)$, y compris la
-partie que l'expérience ne peut pas suivre. Au pic de force :
+Lecture de $u_2(u_1)$ : le déplacement imposé est la somme de l'allongement du ressort 1 ($u_1$)
+et de l'allongement du ressort 2 sous la force $F_1$ ($F_1/k_2$). En faisant croître $u_1$ de 0
+à l'infini on décrit toute la courbe $F(u_2)$, y compris la partie que l'expérience ne peut pas
+suivre. Au pic de force :
 \begin{equation}
-  u_2^{\text{pic}} = \frac{\uc}{\sqrt2}\Bigl(1+\frac{k_1}{k_2}e^{-1/2}\Bigr)
-  = u_1^{\text{pic}} + \frac{F_{\max}}{k_2},
+  u_2^{\text{pic}} = u_1^{\text{pic}} + \frac{F_{\max}}{k_2}
+  = \frac{\uc}{\sqrt2}\Bigl(1+\frac{k_1}{k_2}e^{-1/2}\Bigr).
 \end{equation}
-somme de l'allongement du béton et de celui de la barre sous $F_{\max}$.
+Quand $k_2 \ll k_1$, le second terme domine : presque tout le déplacement imposé au pic est
+l'allongement de la barre d'acier.
 
 \subsection{Où $u_2$ rebrousse chemin}
+Dérivons \eqref{eq:ana} par rapport au paramètre $u_1$ :
 \begin{equation}
-  \frac{\dd u_2}{\dd u_1} = 1 + \frac{k_1}{k_2}e^{-x^2}(1-2x^2) = \frac{k_t(u_1)}{k_2}.
+  \frac{\dd u_2}{\dd u_1} = 1 + \frac{1}{k_2}\frac{\dd F_1}{\dd u_1} = \frac{k_2 + \dd F_1/\dd u_1}{k_2} = \frac{k_t(u_1)}{k_2}.
 \end{equation}
-On retrouve la tangente du système : $u_2$ croît tant que $k_t > 0$, décroît quand $k_t < 0$.
-Le point limite est la première racine de $k_t = 0$, soit
+On retrouve la tangente du système : $u_2$ croît avec $u_1$ tant que $k_t > 0$, décroît quand
+$k_t < 0$. Autrement dit, suivre la branche d'équilibre au-delà du point limite exigerait de
+\emph{diminuer} $u_2$ tout en continuant d'allonger le béton : c'est le snap-back. Le point
+limite est la première racine de $k_t = 0$, soit
 \begin{equation}
   e^{-x^2}\bigl(2x^2-1\bigr) = \frac{k_2}{k_1} .
   \label{eq:xlim}
@@ -354,23 +616,35 @@ figure~\ref{fig:fu}.
 \begin{figure}[h]\centering
   \includegraphics[width=.8\textwidth]{figures/force_displacement.pdf}
   \caption{Les trois solutions dans le plan $(u_2, F)$. Rouge : branche analytique complète avec
-  son rebroussement. Bleu : statique, saute ou s'arrête au point limite selon la taille d'incrément. Vert : dynamique, le noeud
-  oscille après la rupture et $F$ devient alternativement négative.}
+  son rebroussement. Bleu : statique, saute ou s'arrête au point limite selon la taille d'incrément.
+  Vert : dynamique, le noeud oscille après la rupture et $F$ devient alternativement négative.}
   \label{fig:fu}
 \end{figure}
 
 \subsection{Le bilan d'énergie du saut}
-Énergie libre du système (élastique stockée) :
+\label{sec:energie}
+Énergie libre du système (élastique stockée dans les deux ressorts) :
 \begin{equation}
-  \Psi = \tfrac12k_1(1-d)u_1^2 + \tfrac12k_2(u_2-u_1)^2 .
+  \Psi(u_1,u_2,d) = \tfrac12k_1(1-d)u_1^2 + \tfrac12k_2(u_2-u_1)^2 .
 \end{equation}
-Différentions, en utilisant l'équilibre $k_1(1-d)u_1 = k_2(u_2-u_1) = F$ :
+Différentions par rapport aux trois variables, en utilisant l'équilibre
+$k_1(1-d)u_1 = k_2(u_2-u_1) = F$ pour simplifier :
 \begin{align}
-  \dd\Psi &= k_1(1-d)u_1\,\dd u_1 - \tfrac12k_1u_1^2\,\dd d + k_2(u_2-u_1)(\dd u_2-\dd u_1)\\
-          &= F\,\dd u_1 - Y\,\dd d + F\,\dd u_2 - F\,\dd u_1 = F\,\dd u_2 - Y\,\dd d,
+  \dd\Psi &= \underbrace{k_1(1-d)u_1\,\dd u_1}_{\partial\Psi/\partial u_1}
+           \underbrace{-\tfrac12k_1u_1^2\,\dd d}_{\partial\Psi/\partial d}
+           + \underbrace{k_2(u_2-u_1)(\dd u_2-\dd u_1)}_{\text{ressort 2}}\\
+          &= F\,\dd u_1 - Y\,\dd d + F\,\dd u_2 - F\,\dd u_1 = F\,\dd u_2 - Y\,\dd d .
 \end{align}
-avec $Y = \tfrac12k_1u_1^2$ le taux de restitution d'énergie. Donc, le long de la branche
-d'équilibre entre deux états,
+Les deux termes en $F\,\dd u_1$ se compensent : c'est l'équilibre qui le garantit (le travail
+intérieur du noeud 1 est nul). Il reste deux termes :
+\begin{itemize}[nosep]
+  \item $F\,\dd u_2$ : le travail de la machine, force fois déplacement imposé ;
+  \item $Y\,\dd d$ avec $Y = -\partial\Psi/\partial d = \tfrac12k_1u_1^2$ : le \emph{taux de
+        restitution d'énergie}, énergie libérée par unité d'endommagement. $Y$ est toujours
+        positif, et comme $\dd d \ge 0$ (irréversibilité), ce terme est toujours une perte
+        d'énergie libre : c'est la dissipation.
+\end{itemize}
+Donc, le long de la branche d'équilibre entre deux états,
 \begin{equation}
   \underbrace{\int F\,\dd u_2}_{W\ \text{(travail de la machine)}} = \Psi_2-\Psi_1 + \underbrace{\int Y\,\dd d}_{\mathcal D\ \text{(dissipé par endommagement)}} .
 \end{equation}
@@ -381,7 +655,9 @@ libérée se décompose en
   \Psi_1-\Psi_2 = \mathcal D_{\text{branche}} + |W| ,
 \end{equation}
 où $|W|$ est l'aire comprise entre le segment vertical du saut et la branche analytique. Cette
-aire est ce que le béton n'arrive pas à dissiper : elle part en énergie cinétique.
+aire est ce que le béton n'arrive pas à dissiper : elle part en énergie cinétique. Chaboche et
+Feyel montrent qu'une régularisation visqueuse minimale dissiperait exactement cette aire ;
+Acary et Monerie l'appellent l'énergie visqueuse minimale (leur figure 8).
 \begin{alamain}
 $\Psi_1 = \tfrac12\kd(u_1^{\lim})\,(u_1^{\lim})^2 + \dfrac{F(u_1^{\lim})^2}{2k_2}
 \simeq \Psi_1^{\text{pic}}+\Psi_2^{\text{pic}}$ (le point limite est très proche du pic), \quad
@@ -393,39 +669,51 @@ Vitesse que prendrait la masse si tout partait en cinétique : $v = \sqrt{2|W|/m
 
 \section{Le calcul statique par Newton--Raphson}
 
-\subsection{L'algorithme}
+\subsection{L'algorithme, et pourquoi il marche}
 On impose $u_2$ par $\ninc$ incréments de $0$ à $u_2^f$. À chaque incrément on cherche
-$u_1$ tel que $R(u_1;u_2) = 0$ par la méthode de Newton :
+$u_1$ tel que $R(u_1;u_2) = 0$. La méthode de Newton remplace, autour de l'itéré courant
+$u_1^{(i)}$, le résidu par sa tangente :
 \begin{equation}
-  u_1^{(i+1)} = u_1^{(i)} - \frac{R(u_1^{(i)})}{k_t(u_1^{(i)})},\qquad
-  k_t = \frac{\partial R}{\partial u_1} = \kd + u_1\frac{\dd\kd}{\dd u_1} + k_2 ,
+  R(u_1) \simeq R(u_1^{(i)}) + k_t(u_1^{(i)})\,(u_1 - u_1^{(i)}),
 \end{equation}
-en partant de la solution de l'incrément précédent (\emph{warm start}). On arrête quand
-$|R| \le \varepsilon_R$, ou après $\imax$ itérations (échec). Géométriquement : on trace la
-tangente au résidu au point courant et on prend son intersection avec l'axe.
+et prend pour itéré suivant le zéro de cette droite :
+\begin{equation}
+  u_1^{(i+1)} = u_1^{(i)} - \frac{R(u_1^{(i)})}{k_t(u_1^{(i)})}.
+  \label{eq:newton}
+\end{equation}
+Lecture : $R/k_t$ est une force divisée par une raideur, donc un déplacement ; c'est de
+combien il faut bouger pour annuler le résidu \emph{si la raideur restait constante}. On part
+de la solution de l'incrément précédent (\emph{warm start}), on arrête quand $|R| \le \varepsilon_R$,
+ou après $\imax$ itérations (échec). Géométriquement : on trace la tangente au résidu au point
+courant et on prend son intersection avec l'axe.
+
+Si $R$ est proche d'une droite entre l'itéré et la racine, l'erreur est élevée au carré à chaque
+itération (convergence quadratique) : trois itérations font passer de $10^{-1}$ à $10^{-8}$.
+Deux choses peuvent casser cela : une tangente qui change beaucoup entre l'itéré et la racine
+(courbure forte), ou une tangente proche de zéro (pas gigantesque). Les deux arrivent au point
+limite.
 
 \subsection{Ce qui se passe loin du point limite}
 Le résidu est presque une droite de pente $k_t \simeq k_1+k_2$ : à chaque incrément le point de
 départ est à une distance $\Delta u_2\,k_2/(k_1+k_2)$ de la racine, avec $\Delta u_2 = u_2^f/\ninc$, et
-Newton converge en deux ou trois itérations, quadratiquement (l'erreur est élevée au carré à
-chaque itération). On le vérifie en lisant l'historique des itérés que renvoie
-\texttt{static\_solution.solve}.
+Newton converge en deux ou trois itérations. On le vérifie en lisant l'historique des itérés
+que renvoie \texttt{static\_solution.solve}.
 
 \subsection{Ce qui se passe au point limite}
 Juste avant $u_2^{\lim}$, il reste une racine mais $k_t$ tend vers zéro : la tangente devient
 plate, les pas de Newton s'allongent et le nombre d'itérations augmente. Juste après,
 \emph{il n'y a plus de racine} près du point de départ. Le résidu a l'allure de la
-figure~\ref{fig:resnr} : un maximum local légèrement \emph{négatif} à $u_1 \simeq u_1^{\lim}$
-(sa valeur est $R(u_1^{\lim};u_2) = -k_2\,(u_2-u_2^{\lim})$, proportionnelle au dépassement du point
-limite), puis une descente, puis une remontée lente jusqu'à la vraie racine en $u_1 \simeq u_2$.
-Newton, parti juste à gauche du maximum, rebondit indéfiniment autour de lui : près du
-sommet la tangente est presque horizontale et envoie l'itéré loin à gauche, d'où la pente
-raide $\simeq k_1+k_2$ le ramène sous le sommet ; on observe un cycle de courte période. Au
-bout de $\imax$ itérations on déclare l'échec.
+figure~\ref{fig:resnr} : un maximum local légèrement \emph{négatif} à $u_1 \simeq u_1^{\lim}$,
+puis une descente, puis une remontée lente jusqu'à la vraie racine en $u_1 \simeq u_2$.
+
+La hauteur de ce maximum se calcule : au sommet $k_t = 0$, donc $u_1 = u_1^{\lim}$ quel que soit
+$u_2$, et $R(u_1^{\lim};u_2) = (\kd+k_2)u_1^{\lim} - k_2u_2 = k_2u_2^{\lim} - k_2u_2 = -k_2(u_2-u_2^{\lim})$.
+Le sommet est sous l'axe d'une hauteur proportionnelle au dépassement du point limite : aucun
+nombre d'itérations ne peut faire mieux que ce résidu-là tant qu'on reste près de la montée.
 
 \begin{figure}[h]\centering
   \includegraphics[width=.85\textwidth]{figures/explication_residu_nr.pdf}
-    \caption{Résidu statique au premier incrément après le point limite. Les itérés de Newton
+  \caption{Résidu statique au premier incrément après le point limite. Les itérés de Newton
   partis de la solution précédente (rouge) cyclent autour du maximum local, sous l'axe, et ne
   convergent jamais. La seule racine (point vert) est loin à droite, en $u_1 \simeq u_2$, sur la
   branche rompue : $R(u_2;u_2) = k_1u_2e^{-(u_2/\uc)^2}$ est un zéro à la précision machine dès
@@ -439,7 +727,8 @@ l'incrément qui franchit le point limite dépend alors de la taille d'incrémen
 imprévisible.
 
 Avec des incréments fins, le point de départ est tout près du sommet du résidu, les itérés
-cyclent autour de lui et le résidu ne descend jamais sous $|k_2(u_2-u_2^{\lim})|$ : Newton
+cyclent autour de lui (un pas à gauche sur la pente raide, un pas à droite sur la pente plate,
+et ainsi de suite) et le résidu ne descend jamais sous $|k_2(u_2-u_2^{\lim})|$ : Newton
 échoue après $\imax$ itérations et le calcul s'arrête en le signalant.
 
 Avec des incréments grossiers, comme le $\ninc$ retenu ici, il arrive qu'un itéré tombe à une
@@ -450,17 +739,7 @@ exactement sur $u_1 = u_2$. Il a « convergé », mais par un saut : la courbe b
 figure~\ref{fig:fu} chute verticalement de $F_{\max}$ à zéro à cet incrément, qui est le premier
 au-delà de $u_2^{\lim}$ et non le point limite lui-même. Un autre choix de $\ninc$ peut envoyer
 l'itéré vers $u_1<0$ ou le faire cycler : c'est l'avertissement de Chaboche sur les grands pas.
-La figure~\ref{fig:iter} montre le nombre d'itérations par incrément. C'est le comportement authentique d'un pilotage en
-déplacement quasi-statique : au-delà, il n'existe pas d'équilibre accessible en continu, et
-seule la dynamique (section~\ref{sec:dyn}) dit ce qui se passe réellement.
-
-Si l'on voulait quand même prolonger le calcul statique, deux familles de remèdes existent.
-La première consiste à relancer Newton depuis l'autre branche, $u_1^{(0)} = u_2$, où le résidu
-est strictement croissant (pente $k_2$) et converge immédiatement ; la courbe statique
-descendrait alors verticalement de $F_{\max}$ à $0$ au premier incrément après $u_2^{\lim}$. C'est
-la méthode de Sepasdar et Shakiba (2020) pour les zones cohésives. La seconde est la méthode
-de longueur d'arc, qui suit la branche en faisant décroître $u_2$, ce que l'on a déjà sous
-forme analytique avec \eqref{eq:ana}.
+La figure~\ref{fig:iter} montre le nombre d'itérations par incrément.
 
 \begin{figure}[h]\centering
   \includegraphics[width=\textwidth]{figures/nr_iterations.pdf}
@@ -474,36 +753,60 @@ forme analytique avec \eqref{eq:ana}.
 
 \begin{idee}
 L'échec du Newton--Raphson au point limite n'est pas un défaut de précision ni de pas : c'est un
-défaut de \emph{point de départ}. Augmenter $\ninc$ rapproche seulement le point de départ
-du sommet du résidu, cela ne crée pas de racine ; et quand Newton « passe », c'est par un saut
-accidentel vers l'autre branche, pas en suivant l'équilibre.
+défaut de \emph{point de départ}, et plus profondément l'absence de racine accessible en
+continu. Augmenter $\ninc$ rapproche seulement le point de départ du sommet du résidu, cela ne
+crée pas de racine ; et quand Newton « passe », c'est par un saut accidentel vers l'autre
+branche, pas en suivant l'équilibre.
 \end{idee}
+
+\paragraph{Les remèdes connus, non utilisés ici.} Relancer Newton depuis l'autre branche
+($u_1^{(0)} = u_2$, où le résidu est monotone de pente $k_2$) réalise le saut proprement : c'est la
+méthode de Sepasdar et Shakiba. Suivre la branche en laissant $u_2$ décroître est la méthode de
+longueur d'arc, que l'on a déjà sous forme analytique. Ajouter une viscosité rabat la pente
+négative. Toutes transforment le problème ; seule la dynamique le résout tel quel.
 
 \section{Le calcul dynamique}
 \label{sec:dyn}
 
 \subsection{Pourquoi la dynamique ?}
-Physiquement, le saut est un événement dynamique : au point limite, si l'on continue d'augmenter
-$u_2$, le bilan de puissance
+Physiquement, le saut est un événement dynamique. Reprenons le bilan d'énergie de la
+section~\ref{sec:energie} en y ajoutant l'énergie cinétique $K = \tfrac12m_1\dot u_1^2$ et en
+le dérivant en temps :
 \begin{equation}
-  \dot\Psi + \dot K = F\dot u_2 - Y\dot d
+  \dot\Psi + \dot K = F\dot u_2 - Y\dot d .
 \end{equation}
-ne peut être satisfait qu'avec $\dot K > 0$ : la masse accélère. Il faut donc ajouter l'inertie au
-noeud 1 :
+Au point limite, si l'on continue d'augmenter $u_2$ ($\dot u_2 > 0$), la branche d'équilibre
+voudrait $\dot u_2 < 0$ : l'équilibre ne peut plus être maintenu, $\dot\Psi$ devient très
+négatif (les deux ressorts rendent leur énergie) tandis que $Y\dot d$ ne peut en absorber qu'une
+partie. Le seul terme qui peut équilibrer est $\dot K > 0$ : la masse accélère. Il faut donc
+remettre l'inertie dans l'équation du noeud 1 :
 \begin{equation}
   \boxed{\;m_1\ddot u_1 + \kd(u_1)\,u_1 - k_2\bigl(u_2(t)-u_1\bigr) = 0\;}
   \label{eq:mvt}
 \end{equation}
 où $u_2(t) = v_2t$ est une rampe lente jusqu'à $u_2^f$, puis un maintien de durée $t_{\text{hold}}$.
+Cette équation différentielle est toujours bien posée : elle a une solution unique et continue
+quel que soit le signe de $k_t$. C'est ce qu'Acary et Monerie appellent la \emph{relaxation
+dynamique} du problème quasi-statique mal posé.
 
 \subsection{Le schéma de Newmark, construit à la main}
-On cherche $u_{n+1}$, $v_{n+1}$, $a_{n+1}$ à l'instant $t_{n+1} = t_n+\Delta t$. Des développements de
-Taylor avec une accélération interpolée entre $a_n$ et $a_{n+1}$ donnent
+On cherche $u_{n+1}$, $v_{n+1}$, $a_{n+1}$ à l'instant $t_{n+1} = t_n+\Delta t$ connaissant
+$u_n$, $v_n$, $a_n$. Partons des développements de Taylor exacts
+\begin{equation}
+  u_{n+1} = u_n + \Delta t\,v_n + \int_{t_n}^{t_{n+1}}(t_{n+1}-\tau)\,a(\tau)\,\dd\tau,\qquad
+  v_{n+1} = v_n + \int_{t_n}^{t_{n+1}}a(\tau)\,\dd\tau .
+\end{equation}
+Newmark approxime les deux intégrales en supposant l'accélération interpolée entre $a_n$ et
+$a_{n+1}$, avec deux poids $\beta$ et $\gamma$ :
 \begin{align}
   u_{n+1} &= u_n + \Delta t\,v_n + \Delta t^2\Bigl[\bigl(\tfrac12-\beta\bigr)a_n + \beta\,a_{n+1}\Bigr],\\
   v_{n+1} &= v_n + \Delta t\Bigl[(1-\gamma)a_n + \gamma\,a_{n+1}\Bigr].
 \end{align}
-On sépare ce qui est connu (les \emph{prédicteurs}) de ce qui dépend de l'inconnue $a_{n+1}$ :
+Lecture : $\beta = 0$ et $\gamma = 1/2$ donnent les différences centrées explicites (on n'utilise
+que $a_n$ pour le déplacement) ; $\beta = 1/4$, $\gamma = 1/2$ supposent l'accélération constante
+égale à la moyenne de $a_n$ et $a_{n+1}$ sur le pas ; $\beta = 1/2$, $\gamma = 1$ est l'Euler implicite
+en vitesse. On sépare ce qui est connu (les \emph{prédicteurs}) de ce qui dépend de l'inconnue
+$a_{n+1}$ :
 \begin{equation}
   \tilde u = u_n + \Delta t\,v_n + \tfrac{\Delta t^2}{2}(1-2\beta)a_n,\qquad
   \tilde v = v_n + (1-\gamma)\Delta t\,a_n,
@@ -514,10 +817,17 @@ On sépare ce qui est connu (les \emph{prédicteurs}) de ce qui dépend de l'inc
   a_{n+1} = c_1\,(u_{n+1}-\tilde u),\quad c_1 = \frac{1}{\beta\Delta t^2},\qquad
   v_{n+1} = \tilde v + \gamma\Delta t\,a_{n+1}.
 \end{equation}
-Avec $\beta = 1/4$, $\gamma = 1/2$ (accélération moyenne) le schéma est inconditionnellement stable et
-ne dissipe pas ; avec $\gamma > 1/2$ il amortit numériquement les hautes fréquences, d'autant plus
-que $\gamma-\tfrac12$ et $\omega\Delta t$ sont grands, et il faut alors $\beta \ge (\gamma+\tfrac12)^2/4$
-pour rester inconditionnellement stable.
+$\tilde u$ est la position qu'aurait la masse si elle continuait sur sa lancée (vitesse et
+accélération du pas précédent) ; $c_1(u_{n+1}-\tilde u)$ est l'accélération qu'il faut pour
+qu'elle arrive ailleurs. Le coefficient $c_1$ a la dimension de l'inverse d'un temps au carré,
+donc $m_1c_1$ est une raideur.
+
+Avec $\beta = 1/4$, $\gamma = 1/2$ le schéma est inconditionnellement stable (aucune amplification
+des erreurs, quel que soit $\Delta t$, sur un problème linéaire) et ne dissipe pas ; avec
+$\gamma > 1/2$ il amortit numériquement les hautes fréquences, d'autant plus que $\gamma-\tfrac12$
+et $\omega\Delta t$ sont grands, et il faut alors $\beta \ge (\gamma+\tfrac12)^2/4$ pour rester
+inconditionnellement stable. Cette stabilité-là est celle du schéma, pas celle du problème ; on
+y revient à la section~\ref{sec:stab}.
 
 \subsection{Le résidu dynamique}
 On reporte $a_{n+1} = c_1(u_{n+1}-\tilde u)$ dans \eqref{eq:mvt} écrite en $t_{n+1}$ :
@@ -528,7 +838,11 @@ On reporte $a_{n+1} = c_1(u_{n+1}-\tilde u)$ dans \eqref{eq:mvt} écrite en $t_{
   \label{eq:rdyn}
 \end{equation}
 Le résidu dynamique est le résidu statique auquel on ajoute une \textbf{droite} de pente $m_1c_1$
-passant par $\tilde u$. Tout est là.
+passant par $\tilde u$. Terme par terme : $m_1c_1(u_1-\tilde u)$ est la force d'inertie, positive
+si la masse est en avance sur sa position prédite, négative sinon ; $R(u_1;u_2^{n+1})$ est le
+déséquilibre des ressorts au nouvel instant. Tout est là. C'est l'équation (48) d'Acary et
+Monerie, avec leur $M/(Sh^2)$ à la place de notre $m_1/(\beta\Delta t^2)$ (leur schéma correspond
+à $\beta = 1$).
 
 \subsection{Pourquoi le Newton--Raphson passe le snap-back}
 La tangente dynamique vaut $m_1c_1 + k_t$. Le résidu dynamique est strictement croissant, donc
@@ -539,6 +853,12 @@ n'a qu'une racine, dès que
   \Delta t < \Delta t_{\max} = \sqrt{\frac{m_1}{\beta\,(2e^{-3/2}k_1-k_2)}} .
   \label{eq:dtmax}
 \end{equation}
+Lecture de $\Delta t_{\max}$ : il croît avec la masse (plus d'inertie, plus de régularisation),
+décroît avec $\beta$ (un $\beta$ grand met moins de poids sur l'accélération nouvelle), et
+décroît avec la « violence » de l'adoucissement $2e^{-3/2}k_1 - k_2$. Si $k_2 \ge 2e^{-3/2}k_1$,
+le dénominateur est négatif ou nul : il n'y a pas de contrainte, le résidu est déjà monotone en
+statique.
+
 Le code choisit $\Delta t = T_0/N$ avec $T_0 = 2\pi\sqrt{m_1/(k_1+k_2)}$ la période propre du
 système sain. Le rapport inertie/raideur dans la tangente vaut alors
 \begin{equation}
@@ -558,7 +878,7 @@ La figure~\ref{fig:resdyn} montre le résidu statique et les résidus dynamiques
 temps, au même $u_2$ et avec $\tilde u$ pris à l'équilibre précédent. Avec $\Delta t > \Delta t_{\max}$ la
 bosse subsiste ; avec $\Delta t < \Delta t_{\max}$ elle a disparu ; avec $\Delta t \ll \Delta t_{\max}$ le
 résidu est une droite quasi verticale, la racine est presque $\tilde u$ : la masse n'a pas le
-temps de bouger pendant un pas.
+temps de bouger pendant un pas. C'est la figure 9 d'Acary et Monerie.
 
 \begin{figure}[h]\centering
   \includegraphics[width=.85\textwidth]{figures/explication_residu_dyn.pdf}
@@ -582,12 +902,15 @@ Au point limite, la racine du résidu dynamique s'écarte de l'équilibre statiq
 acquiert une vitesse, $\tilde u$ au pas suivant est plus loin, et ainsi de suite : en un nombre de
 pas de l'ordre de $T_{\text{libre}}/(2\Delta t)$, $u_1$ passe de $u_1^{\lim}$ à $u_2$. L'énergie $|W|$
 devient cinétique (le code mesure $K_{\max} \simeq |W|$, l'écart étant l'amortissement numérique
-pendant le saut). Ensuite le ressort 1 est mort ($d = 1$, maintenu par l'irréversibilité), et la masse
-oscille librement sur le ressort 2 autour de $u_2$ :
+pendant le saut). Ensuite le ressort 1 est mort ($d = 1$, maintenu par l'irréversibilité), et la
+masse oscille librement sur le ressort 2 autour de $u_2$ :
 \begin{equation}
   m_1\ddot u_1 + k_2(u_1-u_2) = 0,\qquad T_{\text{libre}} = 2\pi\sqrt{\frac{m_1}{k_2}},\qquad
   \text{amplitude} \simeq u_2^{\lim}-u_1^{\lim} \simeq \frac{F_{\max}}{k_2}.
 \end{equation}
+L'amplitude se lit sur la construction graphique : la masse part de $u_1^{\lim}$ sans vitesse,
+l'équilibre est en $u_2$, donc elle oscille symétriquement autour de $u_2$ avec l'amplitude
+$u_2 - u_1^{\lim}$, qui est l'allongement de la barre d'acier au pic.
 \begin{alamain}
 Calculer $T_{\text{libre}}$ et comparer à la période mesurée sur \texttt{rupture\_zoom} ; vérifier
 que $t_{\text{hold}}$ couvre plusieurs $T_{\text{libre}}$ ; calculer l'amplitude de force
@@ -618,6 +941,151 @@ d'inertie $m_1\ddot u_1$ est négligeable devant $F$). Le nombre de pas de la ra
 $n_{\text{steps}} = u_2^f N/(v_2T_0)$, croît comme $1/v_2$ : une vitesse d'essai réelle demande un
 nombre de pas très grand, d'où un compromis sur $v_2$.
 
+\section{L'étude de la stabilité : quatre questions, quatre critères}
+\label{sec:stab}
+Le mot « stabilité » recouvre ici des questions différentes qui se mélangent facilement. On
+les sépare, puis on les relie entre elles sur notre système.
+
+\subsection{Stabilité d'un équilibre : le travail du second ordre}
+Un équilibre $u_1^*$ à $u_2$ fixé est stable si une petite perturbation $\delta u_1$ coûte de
+l'énergie. L'énergie potentielle totale du système, à $u_2$ fixé et $d$ figé, est
+\begin{equation}
+  \Pi(u_1) = \tfrac12 k_1(1-d)u_1^2 + \tfrac12 k_2(u_2-u_1)^2 .
+\end{equation}
+Sa dérivée première est $\Pi'(u_1) = k_1(1-d)u_1 - k_2(u_2-u_1) = R(u_1;u_2)$ : l'équilibre est un
+point stationnaire de $\Pi$, et le résidu est le gradient de l'énergie. Sa dérivée seconde,
+en tenant compte de la variation de $d$ avec $u_1$ en charge, est $\Pi'' = \partial R/\partial u_1 = k_t$.
+Le développement de Taylor au voisinage de l'équilibre donne
+\begin{equation}
+  \Pi(u_1^*+\delta u_1) - \Pi(u_1^*) = \underbrace{R(u_1^*)\,\delta u_1}_{=0} + \tfrac12\,k_t(u_1^*)\,\delta u_1^2 + \ldots
+\end{equation}
+Le \emph{travail du second ordre} $\tfrac12k_t\,\delta u_1^2$ décide :
+\begin{itemize}[nosep]
+  \item $k_t > 0$ : minimum de $\Pi$, équilibre stable ;
+  \item $k_t < 0$ : maximum de $\Pi$, équilibre instable ;
+  \item $k_t = 0$ : point limite, perte de stabilité.
+\end{itemize}
+C'est le critère de Hill cité par de Borst, $\int\dot\varepsilon:\dot\sigma\,\dd V > 0$, réduit à un
+scalaire. Sur la construction graphique, la racine de gauche a $k_t > 0$ (la droite coupe la
+courbe en montant, de dessous vers dessus) ; la racine du milieu, quand elle existe sur la
+descente de $F_1$, a $k_t < 0$ ; la racine de droite ($u_1\simeq u_2$) a $k_t = k_2 > 0$.
+
+Deux nuances. D'abord, instabilité \emph{matérielle} et \emph{structurelle} ne coïncident
+pas : $\dd F_1/\dd u_1 < 0$ (le ressort s'adoucit) n'implique pas $k_t < 0$ ; entre les deux, le
+ressort 2 stabilise tant que $k_2 > -\dd F_1/\dd u_1$. Ensuite, l'irréversibilité rend la
+stabilité \emph{asymétrique} : sur un équilibre de la branche descendante, la tangente en
+décharge est $k_1(1-d)+k_2 > 0$ même là où la tangente en charge est négative. Un tel
+équilibre est instable vers l'ouverture et stable vers la fermeture. C'est pourquoi, après le
+saut, la masse oscille sans que l'endommagement ne reparte.
+
+\subsection{Stabilité du trajet quasi-statique : unicité et point limite}
+Quand $u_2$ croît, l'équilibre stable suivi peut-il continuer ? C'est le théorème 1 d'Acary et
+Monerie. L'idée : écrire l'équilibre comme un point fixe. À force cohésive $k$ donnée sur
+l'interface, le problème élastique a une solution unique $u(k)$ (c'est la coercivité de
+l'élasticité, constante $m$, qui est chez nous $k_2$). À déplacement $u(k)$ donné, la loi
+cohésive renvoie une nouvelle force $\tilde s(k) = \xi([u(k)])$. L'équilibre est un point fixe
+de $\tilde s$. Si $\tilde s$ est une \emph{contraction}, c'est-à-dire si deux forces différentes
+donnent des forces image \emph{plus proches} l'une de l'autre, le point fixe est unique
+(théorème de Banach). Le calcul donne la condition $\lambda^2c_1/m < 1$, où $c_1$ est la
+constante de Lipschitz de la loi (sa pente maximale en valeur absolue) et $\lambda$ une constante
+de trace. En dimension un, $\lambda = 1$ et la condition devient leur équation (42) :
+\begin{equation}
+  \frac{\sup_{u\ge u_{\text{pic}}}|\xi'(u)|}{E/L} < 1
+  \quad\Longleftrightarrow\quad
+  \frac{\max(-\dd F_1/\dd u_1)}{k_2} < 1
+  \quad\Longleftrightarrow\quad
+  k_2 > 2e^{-3/2}k_1 .
+\end{equation}
+C'est notre critère de snap-back, obtenu comme condition d'unicité d'un point fixe et non par
+simple lecture graphique. Le lien avec le paragraphe précédent : cette condition garantit
+$k_t > 0$ \emph{partout}, donc une seule racine, toujours stable, et un trajet continu. Si elle
+est violée, il existe un intervalle où $k_t < 0$ ; le trajet stable rencontre $k_t = 0$ au point
+limite, et au-delà la racine stable de gauche n'existe plus.
+
+Il faut être précis sur ce qui est perdu. Ce n'est pas l'unicité au sens strict : Chaboche
+insiste sur le fait que, au-delà du point limite, l'état rompu est bien l'unique solution. Ce
+qui est perdu, c'est la \emph{continuité} de la solution par rapport à la donnée $u_2$ : une
+variation infime de $u_2$ fait passer d'un équilibre à un autre très éloigné. Un problème dont
+la solution ne dépend pas continûment des données est dit \emph{mal posé} (au sens
+d'Hadamard), et c'est le terme qu'emploient Acary et Monerie pour le problème quasi-statique
+en snap-back. Toute méthode purement statique bute là-dessus, Newton--Raphson compris : il
+n'y a pas de chemin continu à suivre.
+
+\subsection{Stabilité dynamique en temps continu : la relaxation}
+Dès qu'on remet la masse, la question change. L'équation $m_1\ddot u_1 + R(u_1;u_2(t)) = 0$ est
+une équation différentielle ordinaire : avec $R$ régulière, elle a une solution unique,
+continue en temps, qui dépend continûment des données, quel que soit le signe de $k_t$. Le
+problème dynamique est \emph{bien posé} là où le problème statique ne l'était pas. C'est la
+« relaxation dynamique » : la masse est toujours présente dans la réalité, et tout processus
+de rupture est dynamique même sous chargement quasi-statique.
+
+Autour d'un équilibre $u_1^*$, posons $u_1 = u_1^* + \delta u_1$ et linéarisons :
+\begin{equation}
+  m_1\ddot{\delta u_1} + k_t(u_1^*)\,\delta u_1 = 0 .
+\end{equation}
+Si $k_t > 0$, les solutions sont $\cos$ et $\sin$ de $\omega t$ avec $\omega = \sqrt{k_t/m_1}$ :
+la perturbation reste bornée, l'équilibre est stable au sens de Lyapunov. Si $k_t < 0$, les
+solutions sont $\exp(\pm\sigma t)$ avec $\sigma = \sqrt{-k_t/m_1}$ : la perturbation croît
+exponentiellement, l'équilibre est instable, mais \emph{à vitesse finie} et selon une loi
+connue. On retrouve le critère du second ordre, avec un contenu physique en plus : l'équilibre
+instable n'est pas interdit, il est quitté, et le temps caractéristique du départ est
+$1/\sigma = \sqrt{m_1/|k_t|}$. L'énergie libérée $|W|$ part en énergie cinétique
+(section~\ref{sec:energie}). La dynamique décrit précisément ce que le quasi-statique ne
+pouvait pas décrire : le trajet entre les deux équilibres.
+
+\subsection{Stabilité du problème incrémental : le pas de temps}
+Une fois le temps discrétisé par Newmark, le problème à résoudre à chaque pas est
+$r(u_1) = 0$ avec la tangente $m_1/(\beta\Delta t^2) + k_t$. Il est bien posé (une racine, Newton
+converge) si
+\begin{equation}
+  \frac{m_1}{\beta\Delta t^2} > -\min k_t
+  \quad\Longleftrightarrow\quad
+  \Delta t < \Delta t_{\max} .
+\end{equation}
+C'est l'équation (48) et la figure 9 d'Acary et Monerie. Il faut bien distinguer cette
+condition de la \emph{stabilité numérique} du schéma : Newmark avec $\beta\ge(\gamma+\tfrac12)^2/4$
+est inconditionnellement stable au sens classique, c'est-à-dire qu'il n'amplifie pas les
+erreurs sur un système linéaire, quel que soit $\Delta t$. La condition $\Delta t < \Delta t_{\max}$
+ne concerne pas l'amplification des erreurs mais l'existence et l'unicité de la solution du
+problème \emph{non linéaire} de chaque pas. Les deux notions sont indépendantes : on peut
+avoir un schéma inconditionnellement stable et un résidu incrémental non monotone (pas trop
+grand), ou l'inverse.
+
+\subsection{Comment les quatre s'emboîtent}
+\begin{center}
+\begin{tabular}{@{}p{2.3cm}p{4.0cm}p{5.0cm}p{3.1cm}@{}}
+\toprule
+Niveau & Question & Critère & Si violé\\
+\midrule
+Équilibre & cet état résiste-t-il à une perturbation ? & $k_t(u_1^*) > 0$ & l'état est quitté dynamiquement\\
+Trajet quasi-statique & la solution dépend-elle continûment de $u_2$ ? & $k_2 > 2e^{-3/2}k_1$ (théorème 1) & point limite, saut, Newton échoue\\
+Dynamique continue & le problème est-il bien posé ? & toujours (EDO régulière) & jamais\\
+Pas de temps & le problème incrémental a-t-il une racine unique ? & $\Delta t < \Delta t_{\max} = \sqrt{\dfrac{m_1}{\beta(2e^{-3/2}k_1-k_2)}}$ & résidu non monotone, Newton peut cycler\\
+Schéma numérique & les erreurs sont-elles amplifiées ? & $\beta\ge(\gamma+\tfrac12)^2/4$ & explosion numérique\\
+\bottomrule
+\end{tabular}
+\end{center}
+La lecture d'ensemble, qui est celle d'Acary et Monerie : la perte de stabilité structurelle
+(ligne 1, au point limite) rend le problème quasi-statique mal posé (ligne 2) ; la dynamique
+le régularise parce qu'elle est toujours bien posée (ligne 3) ; la discrétisation implicite
+transmet cette régularisation au problème de chaque pas à condition que le pas soit assez petit
+(ligne 4). La ligne 5 est une condition séparée, classique, qui n'a rien à voir avec
+l'adoucissement.
+
+\begin{alamain}
+Sur votre jeu de paramètres : tracer $k_t$ le long de la branche analytique et repérer
+l'intervalle $[u_1^{\lim},u_1^{\lim\prime}]$ où il est négatif ; calculer le temps caractéristique
+de départ $\sqrt{m_1/|k_t|_{\min}}$ et le comparer à $T_{\text{libre}}/4$ ; vérifier sur les premiers
+pas après le point limite que l'écart entre solution dynamique et équilibre statique croît
+comme $\exp(t\sqrt{-k_t/m_1})$.
+\end{alamain}
+
+\begin{idee}
+L'instabilité de l'équilibre au point limite est très courte en déplacement : $k_t$ passe de
+$+k_2$ à sa valeur la plus négative $k_2 - 2e^{-3/2}k_1$ en moins de $\uc$. C'est ce qui rend le
+saut si brutal et la condition $\Delta t_{\max}$ si facile à satisfaire.
+\end{idee}
+
 \section{Synthèse}
 
 \begin{center}
@@ -647,7 +1115,27 @@ Vérifications à refaire soi-même, avec les formules à évaluer :
         $N_{\min} = T_0/\Delta t_{\max}$.
   \item $T_{\text{libre}} = 2\pi\sqrt{m_1/k_2}$, amplitude $\simeq F_{\max}/k_2$, $F_2$ entre $\pm F_{\max}$ ;
         comparer $F_{\max}$ à la charge d'Euler de la barre.
+  \item Stabilité : signe de $k_t$ sur chaque racine ; temps de départ $\sqrt{m_1/|k_t|_{\min}}$.
 \end{enumerate}
 \end{alamain}
+
+\section*{Références utilisées}
+\begin{itemize}[nosep]
+  \item V. Acary, Y. Monerie, \emph{Nonsmooth fracture dynamics using a cohesive zone approach},
+        rapport INRIA 6032, 2006 : section 3.1 (unicité, saut de solution, relaxation
+        dynamique), section 3.2 (longueur interne, raideur initiale des CZM intrinsèques).
+  \item J.-L. Chaboche, F. Feyel, Y. Monerie, \emph{Interface debonding models: a viscous
+        regularization with a limited rate dependency}, IJSS 2001 : exemple uniaxial du saut,
+        interphase/interface, catalogue des remèdes, énergie visqueuse minimale.
+  \item R. de Borst, C. Verhoosel, \emph{Damage, material instabilities and failure}, 2017 :
+        algorithme d'endommagement, critère de Hill, bande de fissuration.
+  \item R. Sepasdar, M. Shakiba, \emph{Overcoming the convergence difficulty of cohesive zone
+        models through a Newton--Raphson modification technique}, EFM 2020 : nature du cycle de
+        Newton au point limite.
+  \item A. Suffis, A. Combescure, \emph{Modèle d'endommagement à effet retard}, 2002 :
+        régularisation temporelle, localisation.
+  \item Note de cours \emph{Loi de comportement élastique-endommageable} : poutre
+        bi-matériau, bilan de puissance, nécessité de la dynamique.
+\end{itemize}
 
 \end{document}
