@@ -189,7 +189,13 @@ Chaque élément de cette formule a un rôle :
         sécante. Une fissure ne se referme pas en se ressoudant.
 \end{itemize}
 Tant que le chargement est monotone, $d = \hat d(u_1)$ et on écrit simplement $d(u_1)$. La
-figure~\ref{fig:law} montre $d(u_1)$, la raideur relative $1-d$ et la force $F_1$.
+figure~\ref{fig:law} montre $d(u_1)$, la raideur relative $1-d$ et la force $F_1$. Une
+conséquence visible de l'irréversibilité : quand on trace les points $(u_1, d)$ de la solution
+dynamique, ceux de la phase de charge sont sur la courbe $\hat d(u_1)$, mais après la rupture
+la masse oscille, $u_1$ repasse sous les valeurs déjà atteintes, et les points s'alignent sur
+l'horizontale $d = 1$, \emph{hors} de la courbe. Ce ne sont pas des erreurs : c'est la décharge
+le long de la sécante. La figure \texttt{damage.pdf} du dépôt les distingue (charge en vert,
+décharge en orange).
 
 \begin{figure}[h]\centering
   \includegraphics[width=\textwidth]{figures/damage_law.pdf}
