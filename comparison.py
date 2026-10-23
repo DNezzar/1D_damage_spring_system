@@ -157,11 +157,11 @@ def main(save=False):
     ax.legend()
     ax = axes[1]
     ax.plot(u2_dyn[1:], it_dyn, 'g.-', ms=3, lw=0.8)
-    ax.axhline(prm.max_iter, color='r', ls='--', lw=1, label=f'max_iter = {prm.max_iter}')
+    ax.axhline(prm.max_iter_dyn, color='r', ls='--', lw=1, label=f'max_iter_dyn = {prm.max_iter_dyn}')
     ax.set_xlabel('u2 [mm]')
     ax.set_ylabel('NR iterations per time step')
     ax.set_title('Dynamic: a few iterations everywhere, including through the snap')
-    ax.set_ylim(0, prm.max_iter * 1.1)
+    ax.set_ylim(0, max(prm.max_iter, prm.max_iter_dyn) * 1.1)
     ax.grid(True, alpha=0.3)
     ax.legend()
     plt.tight_layout()

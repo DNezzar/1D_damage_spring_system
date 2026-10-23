@@ -8,7 +8,7 @@ One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d =
 
 | File | Role |
 |---|---|
-| `parameters.py` | all physical and numerical parameters, derived quantities (`python parameters.py` prints the summary) |
+| `parameters.py` | all physical and numerical parameters (static: `inc`, `eps_nr`, `max_iter`; dynamic: `beta_nm`, `gamma_nm`, `N_per_period`, `max_iter_dyn`, `v2`, `t_hold`), derived quantities (`python parameters.py` prints the summary) |
 | `model.py` | damage law with history variable, static residual and tangent, Newton-Raphson |
 | `analytical_solution.py` | equilibrium branch parametrised by `u1`, peak, energy balance of the jump |
 | `static_solution.py` | `u2` increments, plain Newton-Raphson; at the limit point the NR either jumps by itself onto the damaged branch (coarse increments) or fails and the calculation stops (fine increments) |

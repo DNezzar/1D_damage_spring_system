@@ -44,7 +44,7 @@ def export(outdir=None):
 
     # -- parameters ---------------------------------------------------------
     names = ['E1', 'A1', 'L1', 'rho1', 'f_t', 'E2', 'A2', 'L2', 'rho2', 'm_grip', 'u2_f',
-             'inc', 'eps_nr', 'max_iter', 'beta_nm', 'gamma_nm', 'N_per_period', 'v2', 't_hold',
+             'inc', 'eps_nr', 'max_iter', 'max_iter_dyn', 'beta_nm', 'gamma_nm', 'N_per_period', 'v2', 't_hold',
              'k1', 'k2', 'F_max', 'uc', 'G_f', 'm1', 'omega0', 'T0', 'dt', 'T_ramp',
              'n_steps', 'n_hold', 'c1']
     with open(os.path.join(outdir, 'parameters.dat'), 'w') as f:

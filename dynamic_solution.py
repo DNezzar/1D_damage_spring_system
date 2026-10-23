@@ -41,7 +41,8 @@ def tangent_dynamic(u1, c1, d_prev=0.0):
     return mdl.m1 * c1 + mdl.tangent_static(u1, d_prev)
 
 
-def solve(dt=prm.dt, n_steps=prm.n_steps, n_hold=prm.n_hold, u2_f=prm.u2_f):
+def solve(dt=prm.dt, n_steps=prm.n_steps, n_hold=prm.n_hold, u2_f=prm.u2_f,
+          max_iter=prm.max_iter_dyn):
     """
     Integrate the dynamic response of node 1 during a ramp of imposed
     displacement u2(t), from 0 to u2_f over n_steps steps, followed by a
@@ -50,7 +51,8 @@ def solve(dt=prm.dt, n_steps=prm.n_steps, n_hold=prm.n_hold, u2_f=prm.u2_f):
 
     Defaults come from parameters.py: dt = T0/N_per_period (the
     inertia/stiffness ratio in the tangent is N^2/pi^2 with beta=1/4),
-    n_steps from the ramp rate v2, n_hold from the hold duration t_hold.
+    n_steps from the ramp rate v2, n_hold from the hold duration t_hold,
+    max_iter = parameters.max_iter_dyn (separate from the static safeguard).
 
     Returns:
         t, u2_t, u1_sol, v1_sol, a1_sol, F_sol : time histories
@@ -79,6 +81,7 @@ def solve(dt=prm.dt, n_steps=prm.n_steps, n_hold=prm.n_hold, u2_f=prm.u2_f):
                 res_dynamic(u, u2_np1, u_tilde, c1, d_prev),
             lambda u, d_prev=d_prev: tangent_dynamic(u, c1, d_prev),
             u_tilde,
+            max_it=max_iter,
         )
         if not ok:
             print(f"[Dynamic] step {n} (t={t[n+1]*1e3:.1f} ms): NR not converged, "

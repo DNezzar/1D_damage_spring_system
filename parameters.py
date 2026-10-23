@@ -50,13 +50,14 @@ u2_f = 0.6              # mm    final displacement (beyond the limit point ~0.47
 # ===========================================================================
 inc = 53                # number of u2 increments between 0 and u2_f
 eps_nr = 1e-6           # N     absolute tolerance on the residual |R| (shared static/dynamic)
-max_iter = 50           # safeguard on the number of NR iterations per increment / time step
+max_iter = 50           # safeguard on the number of NR iterations per static increment
 
 # ===========================================================================
 # 3. DYNAMIC ALGORITHM (implicit Newmark + Newton-Raphson)
 # ===========================================================================
 beta_nm = 0.3           # Newmark beta   (0.25, 0.5 = average acceleration,
 gamma_nm = 0.55         # Newmark gamma   unconditionally stable, no numerical damping)
+max_iter_dyn = 20       # safeguard on the number of NR iterations per time step
 N_per_period = 5        # time steps per natural period T0: dt = T0 / N_per_period.
                         # With beta = 1/4, the inertia/stiffness ratio in the tangent is
                         # m1*c1/(k1+k2) = N^2/pi^2: N = 5 -> 2.5 (regularises the
@@ -104,7 +105,7 @@ def summary():
           f"T0 = {T0*1e3:.4g} ms")
     print(f"Static             : {inc} increments, |R| <= {eps_nr:g} N, {max_iter} it. max")
     print(f"Dynamic            : Newmark beta={beta_nm}, gamma={gamma_nm}, dt = T0/{N_per_period} "
-          f"= {dt*1e3:.4g} ms, m1*c1/(k1+k2) = {m1*c1/(k1+k2):.3g}")
+          f"= {dt*1e3:.4g} ms, m1*c1/(k1+k2) = {m1*c1/(k1+k2):.3g}, {max_iter_dyn} it. max")
     print(f"                     ramp v2 = {v2} mm/s -> {n_steps} steps ({T_ramp*1e3:.4g} ms), "
           f"hold {n_hold} steps ({t_hold*1e3:.4g} ms)")
     print("=" * 66)
