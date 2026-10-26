@@ -51,7 +51,8 @@ Le fil conducteur est le suivant : un ressort qui s'adoucit, monté en série av
 élastique souple, produit un \emph{snap-back} ; le calcul statique bute dessus parce que
 l'équilibre cesse d'exister en continu ; le calcul dynamique passe parce que l'inertie
 rend le problème bien posé. La dernière section rassemble les différentes notions de
-stabilité qui se cachent derrière ces trois phrases.
+stabilité qui se cachent derrière ces trois phrases, et la section~\ref{sec:bazant} réécrit le
+tout dans le formalisme du modèle de couplage en série de Bažant.
 
 \section{Le système et les ordres de grandeur}
 
@@ -1091,6 +1092,199 @@ $+k_2$ à sa valeur la plus négative $k_2 - 2e^{-3/2}k_1$ en moins de $\uc$. C'
 saut si brutal et la condition $\Delta t_{\max}$ si facile à satisfaire.
 \end{idee}
 
+\section{Le formalisme de Bažant : le modèle de couplage en série}
+\label{sec:bazant}
+Le chapitre 13 de Bažant et Cedolin (\emph{Stability of Structures}, 1991) traite exactement
+notre problème sous le nom de \emph{series-coupling model} (§13.2, figure 13.6) : une partie
+$a$ qui s'adoucit, couplée en série avec une partie $b$ qui décharge élastiquement. Cette
+section réécrit notre cas dans leur langage, étape par étape, et montre que chaque résultat
+des sections précédentes y a un nom et une équation.
+
+\subsection{Le travail du second ordre, équation (13.2.1)}
+Bažant note $C_a$ et $C_b$ les raideurs \emph{tangentes} des deux parties, $q_1$ le
+déplacement du point de chargement et $q_2$ le déplacement de l'interface entre $a$ et $b$.
+Chez nous : partie $a$ = ressort 1, partie $b$ = ressort 2, $q_2 = u_1$, $q_1 = u_2$, et
+\begin{equation}
+  C_a = \frac{\dd F_1}{\dd u_1} = k_1e^{-x^2}(1-2x^2)\ (\text{négatif après le pic}),\qquad
+  C_b = k_2\ (\text{toujours positif}).
+\end{equation}
+Pour des incréments $\delta q_1$, $\delta q_2$, les incréments de force sont
+$\delta F_a = C_a\,\delta q_2$ et $\delta F_b = C_b(\delta q_1-\delta q_2)$, et le travail du
+second ordre, c'est-à-dire l'énergie qu'il faudrait fournir pour imposer ces incréments à
+partir de l'équilibre, est
+\begin{equation}
+  \delta^2\mathcal W = \tfrac12C_a\,\delta q_2^2 + \tfrac12C_b\,(\delta q_1-\delta q_2)^2 .
+  \tag{13.2.1}
+\end{equation}
+Le travail du premier ordre $\delta\mathcal W = F_a\delta q_2 + F_b(\delta q_1-\delta q_2) - P\delta q_1$
+est nul à l'équilibre ($F_a = F_b = P$) : c'est le principe des travaux virtuels, et c'est
+notre résidu $R = 0$. Bažant rappelle que $\delta^2\mathcal W = -T(\Delta S)_{\text{in}}$ : c'est
+l'opposé de l'entropie produite, et l'état est stable si $\delta^2\mathcal W > 0$ pour tout
+incrément admissible, parce qu'un $\delta^2\mathcal W < 0$ signifierait une libération spontanée
+d'énergie que le second principe impose de laisser se produire.
+
+\subsection{Pilotage en force contre pilotage en déplacement, équations (13.2.2) et (13.2.3)}
+Si la \emph{force} est pilotée, $\delta q_1$ et $\delta q_2$ sont libres, et $\delta^2\mathcal W > 0$
+exige $C_a > 0$ et $C_b > 0$ : aucun adoucissement n'est admissible, on ne dépasse pas le pic.
+C'est notre tableau des trois régimes. Si le \emph{déplacement} $q_1$ est piloté,
+$\delta q_1 = 0$ pour toute excursion possible, et (13.2.1) se réduit à
+\begin{equation}
+  \delta^2\mathcal W = \tfrac12\,(C_a + C_b)\,\delta q_2^2 ,
+  \tag{13.2.2}
+\end{equation}
+d'où
+\begin{equation}
+  \text{stable si } -C_a < C_b,\qquad \text{instable si } -C_a > C_b .
+  \tag{13.2.3}
+\end{equation}
+Chez nous, $C_a + C_b = k_t$ : (13.2.2) est notre travail du second ordre
+$\tfrac12k_t\,\delta u_1^2$ de la section~\ref{sec:stab}, et (13.2.3) est le critère
+$k_t > 0$. Bažant en donne aussi la lecture directe : la force qu'il faudrait appliquer à
+l'interface pour maintenir l'équilibre après $\delta q_2$ est $\delta f_2 = (C_a+C_b)\delta q_2$, et
+son travail $\tfrac12\delta f_2\,\delta q_2$ est positif si et seulement si $C_a + C_b > 0$.
+
+\subsection{La raideur de la structure entière et le snap-back, équation (13.2.4)}
+Bažant remarque que, pour $C_a < 0$ et $C_b > 0$, la condition $-C_a < C_b$ se réécrit
+$C_a^{-1} + C_b^{-1} < 0$, soit
+\begin{equation}
+  \text{stable si } C = \bigl(C_a^{-1}+C_b^{-1}\bigr)^{-1} < 0 ,
+  \tag{13.2.4}
+\end{equation}
+où $C$ est la raideur tangente de la structure entière vue du déplacement piloté, c'est-à-dire
+$\dd F/\dd u_2$. Lecture : une structure adoucissante est stable sous pilotage en déplacement
+\emph{tant que sa raideur globale est négative} ; elle devient instable quand cette raideur
+redevient positive, c'est-à-dire quand la courbe $F(u_2)$ rebrousse chemin. Le point critique
+$C_a \to -C_b$ correspond à $C \to \infty$ : tangente verticale sur $F(u_2)$. C'est précisément
+notre point limite, et Bažant écrit : « snapback in the response of the entire structure
+represents instability ». Chez nous, $\dd F/\dd u_2 = \dd F_1/\dd u_1 \cdot \dd u_1/\dd u_2 =
+C_a\,k_2/k_t$ ; on vérifie que $C < 0$ équivaut à $k_t > 0$ quand $C_a < 0$.
+
+\subsection{La construction graphique de Bažant, figure 13.6}
+La figure 13.6b de Bažant est notre construction graphique, lue dans l'autre sens : sur la
+courbe $P(q_2)$ de la partie adoucissante, la limite de stabilité est obtenue « en passant une
+tangente de pente $-C_b$ » ; le point de tangence est le point limite. Les figures 13.6c-d-e
+construisent $P(q_1)$ en ajoutant, à chaque force, l'allongement $b$ à l'allongement $a$ :
+c'est notre $u_2(u_1) = u_1 + F_1(u_1)/k_2$, la branche analytique.
+
+\subsection{L'interprétation énergétique de Bažant}
+Bažant formule la condition en échange d'énergie : pour une chute de force $\delta P$,
+l'énergie libérée par la décharge de $b$ est $(\delta P)^2/2C_b$, et l'énergie que $a$ doit
+absorber pour s'adoucir davantage est $-(\delta P)^2/2C_a$. Si $(\delta P)^2/2C_b < -(\delta P)^2/2C_a$,
+l'énergie libérée ne suffit pas et l'instabilité ne peut pas se produire ; sinon « there is an
+excess release of energy that can manifest itself as nothing else but kinetic energy, and so
+equilibrium can no longer exist ». C'est notre section~\ref{sec:energie} : l'aire $|W|$ est
+cet excès, et la dynamique est le seul endroit où il peut aller.
+
+\subsection{L'éprouvette uniaxiale, équation (13.2.5)}
+Bažant applique le modèle à une éprouvette de longueur $L$ et section $A$ dont un segment de
+longueur $h$ s'adoucit (module tangent $E_t < 0$) tandis que le reste $L-h$ décharge
+(module $E_u > 0$), le tout chargé à travers un ressort de machine $C_s$ (figure 13.8). Avec
+$C_a = E_tA/h$ et $C_b^{-1} = C_s^{-1} + (L-h)/(E_uA)$, la condition (13.2.3) devient
+\begin{equation}
+  \text{stable si}\quad -\frac{E_t}{E_u} < \frac{1}{(L/h) - 1 + \dfrac{AE_u}{C_sh}} .
+  \tag{13.2.5}
+\end{equation}
+Notre modèle est le cas particulier où \emph{toute} l'éprouvette s'adoucit ($h = L_1$,
+$L - h = 0$) et où le ressort de machine est la barre d'acier ($C_s = k_2$). Alors
+$(L/h) - 1 = 0$ et (13.2.5) se réduit à
+\begin{equation}
+  -\frac{E_t}{E_u} < \frac{C_sL_1}{AE_u}
+  \quad\Longleftrightarrow\quad
+  -\frac{E_tA}{L_1} < k_2
+  \quad\Longleftrightarrow\quad
+  -\frac{\dd F_1}{\dd u_1} < k_2 ,
+\end{equation}
+c'est-à-dire $k_t > 0$. Au point critique, $E_t^{\text{cr}} = -k_2L_1/A$ : le module tangent
+critique est fixé par la raideur de la chaîne de chargement. Sur notre loi,
+$E_t = (E_1)e^{-x^2}(1-2x^2)$ et la condition la plus défavorable (pente minimale) redonne
+$k_2 < 2e^{-3/2}k_1$ pour qu'une instabilité existe.
+
+\paragraph{Ce que (13.2.5) dit de plus que notre modèle.} Elle contient deux effets que
+nous n'avons pas : la longueur $L$ de l'éprouvette hors de la zone adoucissante, et la taille
+$h$ de cette zone. Bažant en tire trois conclusions (p. 849-851) :
+\begin{itemize}[nosep]
+  \item plus l'éprouvette est longue à $h$ fixé, plus $|E_t^{\text{cr}}|$ est petit, donc plus
+        l'instabilité survient tôt après le pic (\emph{the longer the specimen, the smaller
+        $\varepsilon_{\text{cr}}$}) ; plus la machine est raide, plus elle survient tard ;
+  \item plus $h$ est petit, plus $|E_t^{\text{cr}}|$ est petit, et $\lim_{h\to0}E_t^{\text{cr}} = 0$ :
+        l'instabilité se produit \emph{dès le pic} si la zone adoucissante peut être
+        arbitrairement mince (13.2.6-13.2.7), et l'énergie dissipée tend vers zéro ;
+  \item c'est pourquoi un modèle continu réaliste doit imposer $h \ge l$, une longueur
+        caractéristique matériau : c'est la bande de fissuration (§13.10).
+\end{itemize}
+Notre choix $h = L_1$ est donc un choix de longueur caractéristique : nous avons décidé que
+l'éprouvette entière est la bande. Si on la maillait en $n$ ressorts, Bažant (§13.2,
+« bifurcation and stable path ») montre que la localisation commencerait \emph{au pic}, dans
+le plus petit segment possible, parce que le trajet stable est celui de la descente la plus
+raide (le plus petit $C$) : c'est le même argument que la figure 13.10 et que de Borst.
+
+\subsection{Énergie de rupture et bande de fissuration, (13.2.9) et (13.10.1-13.10.5)}
+Bažant écrit l'énergie de rupture comme l'énergie dissipée sur la largeur $h$ de la zone
+adoucissante : $G_f = h\bigl(\int_{\varepsilon_1}^{\varepsilon_p}\sigma\,\dd\varepsilon + \int_{\varepsilon_p}^\infty\sigma\,\dd\varepsilon\bigr)$,
+aire sous la courbe de charge et la courbe de décharge issues du pic (13.2.9). Chez nous, avec
+$h = L_1$ et une décharge sécante (élastique jusqu'à l'origine), cela donne exactement
+$G_f = L_1\int\sigma\,\dd\varepsilon = e\,f_t^2L_1/E_1$.
+
+Dans le modèle de bande de fissuration (§13.10), la longueur $l_0 = EG_f/f_t'^2$ (13.10.4) est
+la longueur d'Irwin ; Bažant montre que si la largeur de bande $h$ dépasse $2l_0$, le module
+adoucissant ajusté $\bar E_t$ devient positif, c'est-à-dire que la loi $\sigma(\varepsilon)$
+elle-même devrait présenter un snap-back pour dissiper la bonne énergie (13.10.3), et il faut
+alors remplacer la courbe par une chute verticale avec une résistance équivalente
+$f'_{\text{eq}} = \sqrt{2EG_f/h}$ (13.10.5). Chez nous $L_1 = G_fE_1/(ef_t^2) = l_0/e \simeq 0{,}37\,l_0$ :
+nous sommes bien en dessous de $2l_0$, la loi exponentielle est admissible telle quelle, et le
+snap-back est un effet de \emph{structure} (la barre d'acier), pas un artefact de la loi.
+
+\subsection{Convergence des itérations et stabilité, p. 909}
+Un point de Bažant éclaire directement nos figures de Newton--Raphson : « the convergence of
+these iterations has nothing to do with path stability. It depends only on the stability of
+state », parce que pendant les itérations d'un incrément le chargement ne change pas, de
+sorte que les erreurs d'itération sont des écarts à l'équilibre à chargement fixé. C'est
+exactement notre lecture : Newton converge tant que l'état est stable ($k_t > 0$, ligne 1 de
+notre tableau de stabilité) et échoue quand il ne l'est plus. Et sa recommandation, « an
+incorrect path can be detected by checking the signs of pivots of the tangential stiffness
+matrix », est en 1D le test $k_t > 0$ à convergence.
+
+\subsection{La dynamique, §13.1}
+La solution exacte de Bažant et Belytschko (1985) pour une barre adoucissante chargée en
+vitesse à ses deux extrémités montre que, dans un continuum local, l'adoucissement se
+concentre en une section unique, en un instant, avec une déformation infinie et une
+dissipation nulle, quelle que soit la forme de la loi. La solution ne dépend pas continûment
+des conditions aux limites (un changement infime de $c$ produit un changement fini de la
+réponse) : le problème est mal posé au sens d'Hadamard, et l'équation du mouvement change de
+type, d'hyperbolique à elliptique, dans la zone adoucissante ($\alpha^2 = -F'(\varepsilon)/\rho$, 13.1.7).
+Notre modèle à un degré de liberté n'a pas ce problème parce qu'il n'a pas de dimension
+spatiale : l'équation $m_1\ddot u_1 + R = 0$ reste une EDO bien posée. Mais c'est la raison
+profonde pour laquelle $L_1$ doit être une longueur physique et non une taille d'élément : à
+la limite $h \to 0$, la dynamique elle-même dit que la rupture est instantanée et sans
+dissipation.
+
+\begin{center}
+\begin{tabular}{@{}p{4.4cm}p{4.6cm}p{5.2cm}@{}}
+\toprule
+Bažant, §13.2 & Équation & Notre cas\\
+\midrule
+raideur tangente partie $a$ & $C_a$ & $\dd F_1/\dd u_1 = k_1e^{-x^2}(1-2x^2)$\\
+raideur tangente partie $b$ & $C_b$ & $k_2$\\
+travail du second ordre & $\tfrac12(C_a+C_b)\delta q_2^2$ (13.2.2) & $\tfrac12k_t\,\delta u_1^2$\\
+stabilité & $-C_a < C_b$ (13.2.3) & $k_t > 0$\\
+raideur globale & $C = (C_a^{-1}+C_b^{-1})^{-1} < 0$ (13.2.4) & $\dd F/\dd u_2 < 0$ sur la descente\\
+point critique & $C_a \to -C_b$, $C\to\infty$ & point limite, $k_t = 0$\\
+éprouvette & (13.2.5) avec $h = L$, $C_s = k_2$ & $-\dd F_1/\dd u_1 < k_2$\\
+existence d'une instabilité & $\max(-C_a) > C_b$ & $k_2 < 2e^{-3/2}k_1$\\
+énergie de rupture & $G_f = h\int\sigma\,\dd\varepsilon$ (13.2.9) & $G_f = e\,f_t^2L_1/E_1$\\
+longueur d'Irwin & $l_0 = EG_f/f_t'^2$ (13.10.4) & $L_1 = l_0/e$\\
+excès d'énergie & $(\delta P)^2/2C_b + (\delta P)^2/2C_a > 0$ & $|W|$, énergie cinétique\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{alamain}
+Avec vos paramètres : calculer $C_a(u_1)$ le long de la branche, $C = (C_a^{-1}+k_2^{-1})^{-1}$,
+et vérifier que $C$ passe par $-\infty$ puis $+\infty$ au point limite (tangente verticale de
+$F(u_2)$). Calculer $l_0 = E_1G_f/f_t^2$ et vérifier $L_1 = l_0/e$. Calculer le module tangent
+critique $E_t^{\text{cr}} = -k_2L_1/A_1$ et la déformation critique correspondante.
+\end{alamain}
+
 \section{Synthèse}
 
 \begin{center}
@@ -1126,6 +1320,10 @@ Vérifications à refaire soi-même, avec les formules à évaluer :
 
 \section*{Références utilisées}
 \begin{itemize}[nosep]
+  \item Z.~P. Bažant, L. Cedolin, \emph{Stability of Structures}, chapitre 13 « Damage and
+        localization instabilities », 1991 : §13.1 (ondes, mal-posé), §13.2 (couplage en série,
+        équations 13.2.1 à 13.2.9), §13.8 (trajet stable, convergence des itérations), §13.9
+        (effet d'échelle), §13.10 (bande de fissuration, non-local).
   \item V. Acary, Y. Monerie, \emph{Nonsmooth fracture dynamics using a cohesive zone approach},
         rapport INRIA 6032, 2006 : section 3.1 (unicité, saut de solution, relaxation
         dynamique), section 3.2 (longueur interne, raideur initiale des CZM intrinsèques).
