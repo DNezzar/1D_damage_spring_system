@@ -1,0 +1,339 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathmorphing,patterns}
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!50!black,urlcolor=blue!50!black}
+
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\kun}{k_1(1-d)}
+\newtcolorbox{alamain}{colback=yellow!8,colframe=orange!70!black,title=À faire à la main,fonttitle=\bfseries}
+\newtcolorbox{idee}{colback=blue!5,colframe=blue!50!black,title=L'idée à retenir,fonttitle=\bfseries}
+
+\title{Le système à deux ressorts écrit à la manière de Cook :\\
+forces nodales, efforts résultants, solution analytique}
+\author{Note complémentaire, dépôt \texttt{1D\_damage\_spring\_system}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\small Cette note reprend le chapitre 2 de Cook, \emph{Finite Element Modeling for Stress
+Analysis} (§2.2, méthode directe pour l'élément barre), et l'applique pas à pas à notre
+système : d'abord les forces nodales $F_{ij}$ de chaque ressort pris isolément, puis
+l'assemblage et les efforts résultants, puis la construction de la solution analytique. Les
+grandeurs sont celles de \texttt{parameters.py}.
+\end{center}
+
+\section{La notation de Cook pour un élément barre}
+
+\subsection{La méthode directe}
+Cook considère une barre de longueur $L$, section $A$, module $E$, avec un noeud à chaque
+bout (noeuds 1 et 2). Il déplace \emph{un noeud à la fois} et calcule les forces qu'il faut
+\emph{appliquer aux noeuds} pour maintenir cet état de déformation, à partir de la formule
+élémentaire $\delta = FL/(AE)$, soit $F = (AE/L)\,\delta$.
+
+\begin{center}
+\begin{tikzpicture}[scale=1.0]
+  \draw[thick] (0,0) rectangle (3.5,0.4);
+  \node[below] at (0,-0.05) {1};
+  \node[below] at (3.5,-0.05) {2};
+  \draw[->,thick] (-1.1,0.2) -- (0,0.2) node[midway,above] {$F_{11}$};
+  \draw[->,thick] (4.6,0.2) -- (3.5,0.2) node[midway,above] {$F_{21}$};
+  \draw[->] (0,0.75) -- (0.5,0.75) node[above] {$u_1$};
+  \node at (1.75,-0.7) {(a) noeud 1 déplacé de $u_1$, noeud 2 bloqué};
+  \begin{scope}[xshift=7.5cm]
+  \draw[thick] (0,0) rectangle (3.5,0.4);
+  \node[below] at (0,-0.05) {1};
+  \node[below] at (3.5,-0.05) {2};
+  \draw[->,thick] (0,0.2) -- (-1.1,0.2) node[midway,above] {$F_{12}$};
+  \draw[->,thick] (3.5,0.2) -- (4.6,0.2) node[midway,above] {$F_{22}$};
+  \draw[->] (3.5,0.75) -- (4.0,0.75) node[above] {$u_2$};
+  \node at (1.75,-0.7) {(b) noeud 2 déplacé de $u_2$, noeud 1 bloqué};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+
+$F_{ij}$ désigne « la force au noeud $i$ associée au déplacement du noeud $j$ ». Les $F_{ij}$
+sont des \emph{amplitudes} positives ; leur sens est celui des flèches.
+\begin{itemize}[nosep]
+  \item Cas (a) : la barre est comprimée de $u_1$. Pour maintenir cet état il faut pousser le
+        noeud 1 vers la droite et retenir le noeud 2 vers la gauche :
+        $F_{11} = F_{21} = \frac{AE}{L}u_1$.
+  \item Cas (b) : la barre est tendue de $u_2$. Il faut retenir le noeud 1 vers la gauche et
+        tirer le noeud 2 vers la droite : $F_{12} = F_{22} = \frac{AE}{L}u_2$.
+\end{itemize}
+
+\subsection{Les forces résultantes et la matrice de raideur}
+Avec la convention \emph{forces et déplacements positifs dans le même sens} (vers la droite),
+les forces résultantes aux noeuds quand les deux noeuds bougent en même temps sont les sommes
+signées (Cook, équation 2.2-2) :
+\begin{equation}
+  F_1 = F_{11} - F_{12} = \frac{AE}{L}(u_1 - u_2),\qquad
+  F_2 = -F_{21} + F_{22} = \frac{AE}{L}(u_2 - u_1),
+\end{equation}
+soit, sous forme matricielle,
+\begin{equation}
+  \frac{AE}{L}\begin{bmatrix}1 & -1\\ -1 & 1\end{bmatrix}
+  \begin{Bmatrix}u_1\\u_2\end{Bmatrix} = \begin{Bmatrix}F_1\\F_2\end{Bmatrix},
+  \qquad\text{c'est-à-dire}\quad \mathbf k\,\mathbf d = \mathbf r .
+\end{equation}
+Cook en tire la règle générale : \emph{une colonne de $\mathbf k$ est le vecteur des forces
+nodales qu'il faut appliquer à l'élément pour maintenir un état où ce degré de liberté vaut 1
+et les autres 0}. Avec $u_1 = 1$, $u_2 = 0$, le produit $\mathbf k\mathbf d$ donne la première
+colonne, $\{F_{11},\,-F_{21}\}^{\mathsf T}$.
+
+\paragraph{Deux points à ne pas confondre.}
+\begin{enumerate}[nosep]
+  \item « $-F_{12}$ » ne veut pas dire que $F_{12}$ est négatif ; cela veut dire que cette force,
+        d'amplitude positive, agit vers la gauche.
+  \item $F_1$ et $F_2$ sont les forces \emph{appliquées à la barre par l'extérieur} (les charges
+        nodales $\mathbf r$), pas les forces que la barre exerce sur les noeuds. Dans le
+        vocabulaire de \texttt{explication.tex}, ce sont les forces intérieures $f^{\text{int}}$ de
+        l'élément : ce que les noeuds doivent recevoir pour que l'élément reste dans cet état.
+        On a toujours $F_1 + F_2 = 0$ : la barre isolée est en équilibre.
+\end{enumerate}
+
+\section{Nos deux ressorts écrits élément par élément}
+
+\subsection{Le montage et les numéros de noeuds}
+\begin{center}
+\begin{tikzpicture}[scale=1.1]
+  \fill[pattern=north east lines] (-0.4,-0.5) rectangle (0,0.5);
+  \draw[thick] (0,-0.5) -- (0,0.5);
+  \draw[thick,decorate,decoration={zigzag,segment length=6pt,amplitude=3pt}] (0,0) -- (3,0);
+  \node[above] at (1.5,0.25) {élément 1 : $\kun$};
+  \draw[thick,fill=gray!30] (3,-0.35) rectangle (3.8,0.35);
+  \node at (3.4,0) {$m_1$};
+  \draw[thick,decorate,decoration={zigzag,segment length=6pt,amplitude=3pt}] (3.8,0) -- (6.8,0);
+  \node[above] at (5.3,0.25) {élément 2 : $k_2$};
+  \draw[thick] (6.8,-0.4) -- (6.8,0.4);
+  \draw[->,thick,red] (6.8,0) -- (7.8,0) node[right] {$u_2$ imposé};
+  \node[below] at (0,-0.6) {noeud 0, $u_0 = 0$};
+  \node[below] at (3.4,-0.5) {noeud 1, $u_1$};
+  \node[below] at (6.8,-0.5) {noeud 2, $u_2$};
+\end{tikzpicture}
+\end{center}
+Chaque ressort est une barre de Cook dont $AE/L$ est remplacé par sa raideur : $\kun$ pour
+l'élément 1 (sécante, dépendant de $u_1$ par $d$), $k_2$ pour l'élément 2. Les déplacements
+nodaux sont $u_0 = 0$ (encastrement), $u_1$ (inconnu), $u_2$ (imposé).
+
+\subsection{Élément 1, noeuds 0 et 1}
+Avec les notations de Cook appliquées aux noeuds $(0,1)$ : $F_{00} = F_{10} = \kun\,u_0 = 0$ et
+$F_{01} = F_{11} = \kun\,u_1$. Les forces résultantes sont
+\begin{equation}
+  \begin{Bmatrix}F_0^{(1)}\\F_1^{(1)}\end{Bmatrix}
+  = \kun\begin{bmatrix}1 & -1\\ -1 & 1\end{bmatrix}\begin{Bmatrix}0\\u_1\end{Bmatrix}
+  = \begin{Bmatrix}-\kun\,u_1\\ +\kun\,u_1\end{Bmatrix}.
+\end{equation}
+Lecture : pour tenir le ressort 1 allongé de $u_1$, il faut retenir le noeud 0 vers la gauche
+et tirer le noeud 1 vers la droite, avec la même amplitude $\kun\,u_1$. C'est son effort
+normal $N_1$.
+
+\subsection{Élément 2, noeuds 1 et 2}
+De même avec $k_2$ :
+\begin{equation}
+  \begin{Bmatrix}F_1^{(2)}\\F_2^{(2)}\end{Bmatrix}
+  = k_2\begin{bmatrix}1 & -1\\ -1 & 1\end{bmatrix}\begin{Bmatrix}u_1\\u_2\end{Bmatrix}
+  = \begin{Bmatrix}k_2(u_1-u_2)\\ k_2(u_2-u_1)\end{Bmatrix}.
+\end{equation}
+Pour tenir le ressort 2 allongé de $u_2 - u_1$, il faut retenir le noeud 1 vers la gauche
+et tirer le noeud 2 vers la droite, avec l'amplitude $k_2(u_2-u_1)$ : son effort normal $N_2$.
+Le $F_{22}$ de Cook sur cet élément est $k_2u_2$ (ce qu'il faut tirer au noeud 2 pour l'y
+amener, noeud 1 bloqué), et son $F_{12}$ est la même amplitude vue du noeud 1.
+
+\section{L'assemblage et les efforts résultants}
+
+\subsection{Assembler : additionner à chaque noeud}
+L'étape « connect elements together » de Cook consiste à additionner, en chaque noeud, les
+forces résultantes de tous les éléments qui s'y rattachent, et à égaler la somme à la force
+extérieure appliquée à ce noeud. Le noeud 1 reçoit l'élément 1 et l'élément 2 ; les noeuds
+0 et 2 n'en reçoivent qu'un. On obtient le système à trois degrés de liberté
+\begin{equation}
+  \underbrace{\begin{bmatrix}
+    \kun & -\kun & 0\\
+    -\kun & \kun + k_2 & -k_2\\
+    0 & -k_2 & k_2
+  \end{bmatrix}}_{\mathbf K}
+  \underbrace{\begin{Bmatrix}0\\u_1\\u_2\end{Bmatrix}}_{\mathbf D}
+  = \underbrace{\begin{Bmatrix}R_0\\ 0\\ F_2\end{Bmatrix}}_{\mathbf R}.
+  \label{eq:assemble}
+\end{equation}
+Au second membre : $R_0$ est la réaction de l'encastrement (inconnue), $0$ parce qu'aucune
+force extérieure n'est appliquée au noeud 1, $F_2$ la force que la machine applique au
+noeud 2 (inconnue). Chaque colonne de $\mathbf K$ somme à zéro : une structure libre ne
+résiste pas à une translation d'ensemble.
+
+\subsection{Lire les trois lignes}
+\begin{itemize}[nosep]
+  \item \textbf{Ligne 1} : $R_0 = -\kun\,u_1 = -N_1$. La réaction de l'encastrement est l'opposé
+        de l'effort dans le ressort 1 : l'appui retient vers la gauche.
+  \item \textbf{Ligne 2} : $F_1^{(1)} + F_1^{(2)} = \kun\,u_1 + k_2(u_1-u_2) = 0$. C'est l'équilibre
+        du noeud 1, la seule équation qui contienne une inconnue de déplacement. On la note
+        \begin{equation}
+          R(u_1;u_2) \equiv \bigl(\kun + k_2\bigr)\,u_1 - k_2\,u_2 = N_1 - N_2 .
+          \label{eq:residu}
+        \end{equation}
+        En termes de Cook, le résidu est la somme des charges nodales que les deux éléments
+        \emph{réclament} au noeud 1, somme qui doit être nulle puisque personne ne les fournit.
+        Le terme $k_2u_2$ est la colonne de $\mathbf K$ associée au degré de liberté imposé,
+        passée au second membre : c'est le $f^{\text{ext}}$ de \texttt{explication.tex}.
+  \item \textbf{Ligne 3} : $F_2 = k_2(u_2-u_1) = N_2$. La force appliquée par la machine est
+        l'effort dans le ressort 2. Elle se calcule \emph{après} avoir trouvé $u_1$, et c'est
+        l'ordonnée de la courbe force--déplacement.
+\end{itemize}
+
+\subsection{Les efforts résultants}
+À l'équilibre, la ligne 2 impose $N_1 = N_2$. Il n'y a qu'un seul effort dans toute la
+chaîne, qu'on note $F$, et qui porte plusieurs noms selon l'endroit où on le regarde :
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Point de vue & Expression & Nom\\
+\midrule
+effort dans le ressort 1 & $\kun\,u_1$ & $N_1$, ou $F_1(u_1)$, courbe du ressort endommageable\\
+effort dans le ressort 2 & $k_2(u_2-u_1)$ & $N_2$, ce que calcule le code (\texttt{F\_sol})\\
+force de la machine au noeud 2 & ligne 3 de \eqref{eq:assemble} & $F_2$, la réaction, mesurée par une cellule de force\\
+réaction de l'encastrement & ligne 1 de \eqref{eq:assemble} & $R_0 = -F$\\
+force de la structure & $F(u_2)$ & ordonnée de la courbe force--déplacement\\
+\bottomrule
+\end{tabular}
+\end{center}
+La somme des trois lignes de \eqref{eq:assemble} donne $R_0 + 0 + F_2 = 0$ : les deux seules
+forces extérieures s'équilibrent, même amplitude, sens opposés.
+
+\paragraph{Hors équilibre.} Pendant les itérations de Newton, ou en dynamique, la ligne 2
+n'est pas nulle. En statique elle vaut le résidu $R$, et la somme des lignes donne
+$R_0 + R + F_2 = 0$ : la force non équilibrée sur le noeud 1 est l'écart entre ce que tire la
+machine et ce que retient l'appui. En dynamique cet écart est $-m_1\ddot u_1$ : après la
+rupture, $N_1 = 0$ alors que $N_2 = k_2(u_2-u_1)$ oscille entre $\pm F_{\max}$. C'est pourquoi
+le code définit toujours la force par le ressort 2 : c'est la seule qui ait un sens hors
+équilibre, et c'est la réaction au point de pilotage.
+
+\subsection{Le cas endommageable : même forme, système non linéaire}
+Le seul écart avec Cook est que $\kun$ dépend de $u_1$ par $d = 1-e^{-(u_1/u_c)^2}$. La
+matrice garde la même forme et reste symétrique, mais la ligne 2 devient une équation
+non linéaire en $u_1$. Pour la résoudre par Newton, on dérive le résidu \eqref{eq:residu} :
+\begin{equation}
+  k_t = \frac{\partial R}{\partial u_1} = \kun + u_1\frac{\dd[\kun]}{\dd u_1} + k_2
+  = k_1e^{-x^2}(1-2x^2) + k_2,\qquad x = u_1/u_c .
+\end{equation}
+C'est la « colonne de $\mathbf K$ » du noeud 1, où la raideur sécante $\kun$ est remplacée par
+la raideur tangente du ressort 1. L'assemblage de Cook donne donc directement la tangente du
+Newton--Raphson en remplaçant, dans le bloc de l'élément 1, $\kun$ par $\kun + u_1\,\dd[\kun]/\dd u_1$.
+
+\begin{alamain}
+Écrire les deux matrices élémentaires $2\times2$, assembler le $3\times3$, et vérifier que
+chaque colonne somme à zéro. Imposer $u_0 = 0$ et $u_2$ donné, isoler la ligne 2, retrouver
+\eqref{eq:residu}. Calculer $F_2$ par la ligne 3 et $R_0$ par la ligne 1, vérifier $R_0 = -F_2$ en
+utilisant la ligne 2.
+\end{alamain}
+
+\section{La solution analytique}
+
+\subsection{Le problème}
+À $u_2$ donné, la ligne 2 s'écrit
+\begin{equation}
+  k_1\,u_1\,e^{-u_1^2/u_c^2} + k_2\,u_1 = k_2\,u_2 .
+  \label{eq:transc}
+\end{equation}
+C'est une équation \emph{transcendante} en $u_1$ : l'inconnue apparaît dans un facteur
+linéaire et dans une exponentielle, il n'existe pas de formule fermée pour $u_1(u_2)$, et
+selon $u_2$ elle a une ou trois racines. C'est le problème que Newton attaque numériquement.
+
+\subsection{L'idée : inverser le rôle des variables}
+L'équation \eqref{eq:transc} est \emph{linéaire en $u_2$}. Au lieu de chercher $u_1$ pour un
+$u_2$ donné, on prend $u_1$ comme paramètre et on calcule le $u_2$ qui lui correspond :
+\begin{equation}
+  \boxed{\;u_2(u_1) = u_1 + \frac{k_1\,u_1\,e^{-u_1^2/u_c^2}}{k_2}
+  = u_1\Bigl(1 + \frac{k_1}{k_2}e^{-u_1^2/u_c^2}\Bigr)\;}
+  \label{eq:u2u1}
+\end{equation}
+Lecture : le déplacement imposé est la somme de l'allongement du ressort 1 ($u_1$) et de
+l'allongement du ressort 2 sous le même effort ($N_1/k_2$). C'est la ligne 3 de Cook lue à
+l'envers : $u_2 = u_1 + F_2/k_2$ avec $F_2 = N_1$.
+
+La force le long de la branche est l'effort commun, qu'on écrit avec l'expression du
+ressort 1 parce qu'elle ne dépend que du paramètre :
+\begin{equation}
+  \boxed{\;F(u_1) = k_1\,u_1\,e^{-u_1^2/u_c^2}\;}
+  \label{eq:Fu1}
+\end{equation}
+On aurait pu écrire $F = k_2\bigl(u_2(u_1) - u_1\bigr)$ : en substituant \eqref{eq:u2u1} on
+retrouve exactement \eqref{eq:Fu1}.
+
+\subsection{Parcourir la branche}
+On fait croître $u_1$ de $0$ vers l'infini, on calcule le couple $\bigl(u_2(u_1), F(u_1)\bigr)$
+en chaque point, et on trace $F$ en fonction de $u_2$. C'est ce que fait
+\texttt{analytical\_solution.analytical\_curve} : un \texttt{linspace} sur $u_1$ et les deux
+expressions \eqref{eq:u2u1}--\eqref{eq:Fu1} vectorisées. Chaque $u_1$ donne un équilibre
+unique, donc on obtient \emph{toute} la courbe d'équilibre, y compris la partie que ni
+l'expérience ni le Newton piloté en $u_2$ ne peuvent suivre.
+
+Le paramétrage est légitime parce que, le long de la branche, $u_1$ est strictement
+croissant : c'est $u_2$ qui rebrousse chemin, pas $u_1$. L'allongement du ressort 1 ne
+diminue jamais, donc la variable d'histoire vaut toujours $u_1$ et la loi en charge
+$d = \hat d(u_1)$ s'applique partout.
+
+\subsection{Lire la courbe}
+La dérivée du paramétrage,
+\begin{equation}
+  \frac{\dd u_2}{\dd u_1} = 1 + \frac{1}{k_2}\frac{\dd F}{\dd u_1}
+  = 1 + \frac{k_1}{k_2}e^{-x^2}(1-2x^2) = \frac{k_t}{k_2},
+\end{equation}
+dit où $u_2$ monte ($k_t > 0$) et où il redescend ($k_t < 0$).
+\begin{itemize}[nosep]
+  \item \textbf{Pic de force} : $\dd F/\dd u_1 = 0$, soit $x = 1/\sqrt2$, $F_{\max} = k_1u_c/\sqrt{2e}$,
+        et $u_2^{\text{pic}} = u_1^{\text{pic}} + F_{\max}/k_2$.
+  \item \textbf{Point limite} : première racine de $k_t = 0$, c'est-à-dire de
+        $e^{-x^2}(2x^2-1) = k_2/k_1$, à chercher par dichotomie sur $[1/\sqrt2,\ \sqrt{3/2}]$.
+        Au-delà, $\dd u_2/\dd u_1 < 0$ : suivre la branche exigerait de \emph{diminuer} $u_2$
+        tout en allongeant le béton. C'est le snap-back.
+  \item \textbf{Rebroussement bas} : seconde racine de $k_t = 0$, au-delà de $\sqrt{3/2}$, où
+        $u_2$ est minimal sur la branche.
+  \item \textbf{Branche rompue} : pour $x \gg 1$, $e^{-x^2}\to0$, donc $u_2 \to u_1$ et $F \to 0$.
+\end{itemize}
+Une instabilité n'existe que si $k_t$ peut s'annuler, donc si $k_2 < \max(-\dd F/\dd u_1) =
+2e^{-3/2}k_1$ ; sinon $\dd u_2/\dd u_1 > 0$ partout et la branche est monotone en $u_2$.
+
+\subsection{Ce que la branche permet de calculer}
+\begin{itemize}[nosep]
+  \item Le saut quasi-statique : à $u_2 = u_2^{\lim}$, on cherche sur la branche le second
+        point de même $u_2$, loin sur la queue rompue ; le segment vertical qui les joint est
+        le saut.
+  \item L'énergie libérée : l'aire $|W| = \bigl|\int F\,\dd u_2\bigr|$ entre le saut vertical et
+        la branche, intégrée par trapèzes le long du paramètre $u_1$. C'est ce que fait
+        \texttt{released\_energy} : elle repère les deux indices de la branche ayant le même
+        $u_2$ que le pic, puis intègre entre eux.
+\end{itemize}
+
+\begin{idee}
+Cook écrit chaque élément, assemble, et isole les lignes des inconnues. Sur notre système
+cela donne une seule équation non linéaire, la ligne du noeud 1, et deux lignes de
+post-traitement pour les réactions. La solution analytique naît de la remarque que cette
+équation, impossible à inverser en $u_1$, est linéaire en $u_2$ : on la lit à l'envers, et la
+ligne 3 de Cook, $u_2 = u_1 + F/k_2$, devient le paramétrage de toute la branche d'équilibre.
+\end{idee}
+
+\section*{Références}
+\begin{itemize}[nosep]
+  \item R.~D. Cook, \emph{Finite Element Modeling for Stress Analysis}, chapitre 2, §2.2
+        « Stiffness matrix formulation: bar element », méthode directe, figure 2.2-1,
+        équations 2.2-1 à 2.2-3.
+  \item Planches \emph{Finite Element Method, imposed displacement and applied force}
+        (Varsovie) : passage de la colonne du degré de liberté imposé au second membre.
+  \item Z.~P. Bažant, L. Cedolin, \emph{Stability of Structures}, figure 13.6c-d-e :
+        construction de la réponse globale en ajoutant les allongements à force égale.
+\end{itemize}
+
+\end{document}

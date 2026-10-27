@@ -19,6 +19,7 @@ One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d =
 | `note_damage_spring.tex` | calculation note: derivation from the mass-spring system to the residuals, closed-form branch, numerical choices, results |
 | `note_nonlinear_dynamics.tex` | Newmark scheme in predictor-corrector form and Newton-Raphson for nonlinear dynamics (residual, consistent tangent, algorithm) |
 | `localisation_stabilite.tex` | companion note (in French): part I, the single damageable spring as a localisation hypothesis (Bazant 13.2.5, crack-band reading of L1, n-spring extension); part II, stability by the second-order work (Chaboche citing Bazant), force vs displacement control, loading/unloading asymmetry, bifurcation vs limit point, what Newton iterations measure |
+| `systeme_cook.tex` | companion note (in French): the two-spring system written with Cook's direct method (nodal forces F_ij of each element, assembly, resultant forces and reactions, the equilibrium line as residual) and the construction of the analytical solution by parametrising with u1 |
 | `explication.tex` | step-by-step pedagogical note (in French): damage law, graphical equilibrium construction, snap-back criterion in stiffness and in bar lengths, closed-form branch, why Newton-Raphson cycles at the limit point and how inertia regularises it, with hand-calculation boxes |
 | `figures/` | figures produced by `comparison.py --save` |
 
