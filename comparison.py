@@ -185,7 +185,7 @@ def main(save=False):
     ax.grid(True, alpha=0.3)
     ax.legend(loc='center right')
     ax = axes[1]
-    ax.plot(u1_law, mdl.k1_d(u1_law) * u1_law, 'k-', lw=2, label='$F_1 = k_1(1-d)\,u_1$')
+    ax.plot(u1_law, mdl.k1_d(u1_law) * u1_law, 'k-', lw=2, label=r'$F_1 = k_1(1-d)\,u_1$')
     ax.plot(u1_law, mdl.k1 * u1_law, 'b:', lw=1, label='$k_1 u_1$ (intact)')
     for um, lab in marks:
         ax.axvline(um, color='gray', lw=0.8, ls=':')
