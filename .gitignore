@@ -10,3 +10,6 @@ article/
 *.fdb_latexmk
 *.synctex.gz
 *:Zone.Identifier
+# notes and compiled documents are kept out of the repository (python code only)
+*.tex
+*.pdf

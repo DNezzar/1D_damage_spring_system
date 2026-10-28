@@ -1,5 +1,9 @@
 # 1D damage spring system
 
+[![Snap-back of a damageable spring: short explainer video](video/snapback_short_thumb.png)](video/snapback_short.mp4)
+
+*Short explainer (1 min 37, Manim): the equilibrium branch, why Newton-Raphson struggles at the limit point, and how inertia regularises the residual. The video is stored with Git LFS: `video/snapback_short.mp4`.*
+
 Snap-back of a damageable spring in series with an elastic one: closed-form, static Newton-Raphson and dynamic Newmark solutions, with a comparison of the Newton-Raphson residuals.
 
 One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d = 1 - exp(-(u/uc)²)`) in series with an elastic steel bar, under displacement control. Since the bar stiffness is lower than the softening slope of the concrete, the force-displacement response shows a snap-back that quasi-static displacement control cannot follow. The code compares three solutions: the complete equilibrium branch in closed form, a plain static Newton-Raphson confronted with the limit point, and an implicit Newmark scheme that converts the released energy into kinetic energy. The figures show in particular how the inertia term regularises the non-monotonic Newton-Raphson residual, and compare the number of Newton-Raphson iterations per increment in statics (failure at the limit point) and in dynamics (a few iterations throughout).
@@ -16,12 +20,10 @@ One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d =
 | `comparison.py` | assembles the three solutions and produces the figures |
 | `export_data.py` | writes every computed curve to plain-text `.dat` files in `data/` (pgfplots `\addplot table`, Manim `numpy.loadtxt`) |
 | `data/` | exported data: parameters, damage law, analytical branch, static and dynamic histories, residual curves, NR iterates, energies |
-| `note_damage_spring.tex` | calculation note: derivation from the mass-spring system to the residuals, closed-form branch, numerical choices, results |
-| `note_nonlinear_dynamics.tex` | Newmark scheme in predictor-corrector form and Newton-Raphson for nonlinear dynamics (residual, consistent tangent, algorithm) |
-| `localisation_stabilite.tex` | companion note (in French): part I, the single damageable spring as a localisation hypothesis (Bazant 13.2.5, crack-band reading of L1, n-spring extension); part II, stability by the second-order work (Chaboche citing Bazant), force vs displacement control, loading/unloading asymmetry, bifurcation vs limit point, what Newton iterations measure |
-| `systeme_cook.tex` | companion note (in French): the two-spring system written with Cook's direct method (nodal forces F_ij of each element, assembly, resultant forces and reactions, the equilibrium line as residual) and the construction of the analytical solution by parametrising with u1 |
-| `explication.tex` | step-by-step pedagogical note (in French): damage law, graphical equilibrium construction, snap-back criterion in stiffness and in bar lengths, closed-form branch, why Newton-Raphson cycles at the limit point and how inertia regularises it, with hand-calculation boxes |
+| `math_curve.py` | interactive matplotlib figure: damage law, `F1(u1)` with the line of slope `-k2`, analytical `F(u2)`, with a slider on `k2/k1` |
+| `fig_snapback_raideurs.py` | figure of the snap-back criterion versus `k2/k1` (limit point, tangent of minimum slope) |
 | `figures/` | figures produced by `comparison.py --save` |
+| `video/` | short explainer video (Git LFS) and its thumbnail |
 
 ## Usage
 
@@ -30,7 +32,8 @@ pip install numpy matplotlib
 python comparison.py          # shows the figures
 python comparison.py --save   # also saves them in figures/
 python export_data.py         # writes the .dat files in data/
-pdflatex note_damage_spring.tex
+python math_curve.py          # interactive figure (slider on k2/k1)
+git lfs pull                  # fetches video/snapback_short.mp4
 ```
 
 Units: N, mm, s, tonne.
