@@ -2,7 +2,7 @@
 
 [![Snap-back of a damageable spring: short explainer video](video/snapback_short_thumb.png)](video/snapback_short.mp4)
 
-*Short explainer (1 min 37, Manim): the equilibrium branch, why Newton-Raphson struggles at the limit point, and how inertia regularises the residual. The video is stored with Git LFS: `video/snapback_short.mp4`.*
+*Short explainer (1 min 37, Manim): the equilibrium branch, why Newton-Raphson struggles at the limit point, and how inertia regularises the residual. File: `video/snapback_short.mp4`.*
 
 Snap-back of a damageable spring in series with an elastic one: closed-form, static Newton-Raphson and dynamic Newmark solutions, with a comparison of the Newton-Raphson residuals.
 
@@ -23,7 +23,7 @@ One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d =
 | `math_curve.py` | interactive matplotlib figure: damage law, `F1(u1)` with the line of slope `-k2`, analytical `F(u2)`, with a slider on `k2/k1` |
 | `fig_snapback_raideurs.py` | figure of the snap-back criterion versus `k2/k1` (limit point, tangent of minimum slope) |
 | `figures/` | figures produced by `comparison.py --save` |
-| `video/` | short explainer video (Git LFS) and its thumbnail |
+| `video/` | short explainer video and its thumbnail |
 
 ## Usage
 
@@ -33,7 +33,6 @@ python comparison.py          # shows the figures
 python comparison.py --save   # also saves them in figures/
 python export_data.py         # writes the .dat files in data/
 python math_curve.py          # interactive figure (slider on k2/k1)
-git lfs pull                  # fetches video/snapback_short.mp4
 ```
 
 Units: N, mm, s, tonne.
