@@ -4,6 +4,8 @@
 
 *Short explainer (1 min 37, Manim): the equilibrium branch, why Newton-Raphson struggles at the limit point, and how inertia regularises the residual. File: `video/snapback_short.mp4`.*
 
+This work is presented in a LinkedIn article: [Snap-back of a damageable spring](https://lnkd.in/p/eDt_BEs8).
+
 Snap-back of a damageable spring in series with an elastic one: closed-form, static Newton-Raphson and dynamic Newmark solutions, with a comparison of the Newton-Raphson residuals.
 
 One-degree-of-freedom 1D model: a concrete specimen (damageable spring, law `d = 1 - exp(-(u/uc)²)`) in series with an elastic steel bar, under displacement control. Since the bar stiffness is lower than the softening slope of the concrete, the force-displacement response shows a snap-back that quasi-static displacement control cannot follow. The code compares three solutions: the complete equilibrium branch in closed form, a plain static Newton-Raphson confronted with the limit point, and an implicit Newmark scheme that converts the released energy into kinetic energy. The figures show in particular how the inertia term regularises the non-monotonic Newton-Raphson residual, and compare the number of Newton-Raphson iterations per increment in statics (failure at the limit point) and in dynamics (a few iterations throughout).
